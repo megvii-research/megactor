@@ -1,0 +1,2 @@
+# 该方案为将Condition经过VAE处理，Ref-image使用VAE进行处理
+# 两者在通道上concat，并送入referencenet，referencenet的conv_in层复制两个原来的SD1.5conv_in层的参数

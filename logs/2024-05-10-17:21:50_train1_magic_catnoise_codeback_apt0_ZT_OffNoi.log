@@ -1,0 +1,26 @@
+[2024-05-10 17:21:59,746] [INFO] [real_accelerator.py:191:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-05-10 17:21:59,788] [INFO] [real_accelerator.py:191:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-05-10 17:21:59,907] [INFO] [real_accelerator.py:191:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-05-10 17:21:59,923] [INFO] [real_accelerator.py:191:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-05-10 17:22:00,030] [INFO] [real_accelerator.py:191:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-05-10 17:22:01,186] [INFO] [real_accelerator.py:191:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-05-10 17:22:02,536] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-05-10 17:22:02,536] [INFO] [comm.py:668:init_distributed] Initializing TorchBackend in DeepSpeed with backend nccl
+[2024-05-10 17:22:02,592] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-05-10 17:22:02,761] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-05-10 17:22:02,799] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-05-10 17:22:03,013] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-05-10 17:22:04,019] [INFO] [comm.py:637:init_distributed] cdb=None
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+using mse_loss

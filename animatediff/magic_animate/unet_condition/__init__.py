@@ -1,0 +1,2 @@
+# 该方案为将Condition经过VAE处理后，直接concat到noise的latent上，再将其送入主干unet的conv_in中
+# 主干unet的conv_in后4通道（Condition对应部分）用0初始化参数

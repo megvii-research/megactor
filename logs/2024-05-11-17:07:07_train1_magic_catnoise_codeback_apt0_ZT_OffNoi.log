@@ -1,0 +1,100 @@
+[2024-05-11 17:07:21,793] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-05-11 17:07:21,793] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-05-11 17:07:21,793] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-05-11 17:07:21,793] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-05-11 17:07:21,794] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+[2024-05-11 17:07:21,794] [INFO] [real_accelerator.py:203:get_accelerator] Setting ds_accelerator to cuda (auto detect)
+Warning: The default cache directory for DeepSpeed Triton autotune, /home/jingminhao/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+Warning: The default cache directory for DeepSpeed Triton autotune, /home/jingminhao/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+Warning: The default cache directory for DeepSpeed Triton autotune, /home/jingminhao/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+Warning: The default cache directory for DeepSpeed Triton autotune, /home/jingminhao/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+Warning: The default cache directory for DeepSpeed Triton autotune, /home/jingminhao/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.Warning: The default cache directory for DeepSpeed Triton autotune, /home/jingminhao/.triton/autotune, appears to be on an NFS system. While this is generally acceptable, if you experience slowdowns or hanging when DeepSpeed exits, it is recommended to set the TRITON_CACHE_DIR environment variable to a non-NFS path.
+
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io requires the dev libaio .so object and headers but these were not found.
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m async_io: please install the libaio-dev package with apt
+[93m [WARNING] [0m If libaio is already installed (perhaps from source), try setting the CFLAGS and LDFLAGS environment variables to where it can be found.
+[93m [WARNING] [0m Please specify the CUTLASS repo directory as environment variable $CUTLASS_PATH
+[93m [WARNING] [0m NVIDIA Inference is only supported on Ampere and newer architectures
+[93m [WARNING] [0m NVIDIA Inference is only supported on Ampere and newer architectures
+[93m [WARNING] [0m NVIDIA Inference is only supported on Ampere and newer architectures
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.0
+[93m [WARNING] [0m using untested triton version (2.0.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m NVIDIA Inference is only supported on Ampere and newer architectures
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.0
+[93m [WARNING] [0m using untested triton version (2.0.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.0
+[93m [WARNING] [0m using untested triton version (2.0.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.0
+[93m [WARNING] [0m using untested triton version (2.0.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m NVIDIA Inference is only supported on Ampere and newer architectures
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.0
+[93m [WARNING] [0m using untested triton version (2.0.0), only 1.0.0 is known to be compatible
+[93m [WARNING] [0m NVIDIA Inference is only supported on Ampere and newer architectures
+[93m [WARNING] [0m sparse_attn requires a torch version >= 1.5 and < 2.0 but detected 2.0
+[93m [WARNING] [0m using untested triton version (2.0.0), only 1.0.0 is known to be compatible
+[2024-05-11 17:07:25,886] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-05-11 17:07:26,001] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-05-11 17:07:26,008] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-05-11 17:07:26,009] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-05-11 17:07:26,165] [INFO] [comm.py:637:init_distributed] cdb=None
+[2024-05-11 17:07:26,165] [INFO] [comm.py:668:init_distributed] Initializing TorchBackend in DeepSpeed with backend nccl
+[2024-05-11 17:07:26,180] [INFO] [comm.py:637:init_distributed] cdb=None
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+Loads checkpoint by local backend from path: /data/code/yangshurong/cache/magic_pretrain/control_aux/dw-ll_ucoco_384.pth
+using mse_loss
+Initializing UNet MagicAnimate Pipeline...
+loaded temporal unet's pretrained weights from /data/code/yangshurong/cache/StableDiffusion/unet ...
+loaded temporal unet's pretrained weights from /data/code/yangshurong/cache/StableDiffusion/unet ...
+loaded temporal unet's pretrained weights from /data/code/yangshurong/cache/StableDiffusion/unet ...
+loaded temporal unet's pretrained weights from /data/code/yangshurong/cache/StableDiffusion/unet ...
+loaded temporal unet's pretrained weights from /data/code/yangshurong/cache/StableDiffusion/unet ...
+loaded temporal unet's pretrained weights from /data/code/yangshurong/cache/StableDiffusion/unet ...
+### missing keys: 18; 
+### unexpected keys: 0;
+### Temporal Module Parameters: 0.0 M
+### missing keys: 18; 
+### unexpected keys: 0;
+### Temporal Module Parameters: 0.0 M
+### missing keys: 18; 
+### unexpected keys: 0;
+### Temporal Module Parameters: 0.0 M
+### missing keys: 18; 
+### unexpected keys: 0;
+### Temporal Module Parameters: 0.0 M
+### missing keys: 18; 
+### unexpected keys: 0;
+### Temporal Module Parameters: 0.0 M
+### missing keys: 18; 
+### unexpected keys: 0;
+### Temporal Module Parameters: 0.0 M
+use appearance_encoder from unet
