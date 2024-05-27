@@ -2,7 +2,6 @@
 *.egg-info
 *.py[cod]
 *.jpg
-*.png
 *.git
 *.log
 
