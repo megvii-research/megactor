@@ -53,7 +53,7 @@
 ## Training
 TBD
 ## Inference
-Currently only single-CPU inference is supported.
+Currently only single-GPU inference is supported.
 
     CUDA_VISIBLE_DEVICES=0 python eval.py --config configs/infer12_catnoise_warp08_power_vasa.yaml --source {source image path} --driver {driving video path}
 
