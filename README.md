@@ -5,22 +5,22 @@
 <p align=center>MEGVII Technology</p>
 
 ## News & TODO List
-- **[2024.05.24]** Inference settings are released.
+- **[✅2024.05.24]** Inference settings are released.
 
-- **[TBD]** Data curation pipeline to be released .
+- **[❌]** Data curation pipeline to be released .
 
-- **[TBD]** Training setup to be released.
+- **[❌]** Training setup to be released.
+  
+## Overview
+![Model](https://github.com/megvii-research/MegFaceAnimate/assets/29685592/a3cf55a9-9838-400a-a2e3-281acca11b76)
+
+MegActor is an intermediate-representation-free portrait animator that uses the original video, rather than intermediate features, as the driving factor to generate realistic and vivid talking head videos. Specifically, we utilize two UNets: one extracts the identity and background features from the source image, while the other accurately generates and integrates motion features directly derived from the original videos. MegActor can be trained on low-quality, publicly available datasets and excels in facial expressiveness, pose diversity, subtle controllability, and visual quality.
+
 
 ## Pre-generated results
 
-<table class="center">
-<tr>
-    <td width=100% style="border: none">
-        <video controls autoplay loop src="https://github.com/megvii-research/MegFaceAnimate/assets/29685592/90959508-42b2-4657-a879-dcff22df700f
-" muted="true"></video>
-    </td>
-</tr>
-</table>
+https://github.com/megvii-research/MegFaceAnimate/assets/29685592/6d3edec7-1008-4fde-93ee-a0598114120b
+
 
 ## Preparation
 * Environments
@@ -34,12 +34,13 @@
     mim install "mmcv>=2.0.1"
     mim install "mmdet>=3.1.0"
     mim install "mmpose>=1.1.0"
-    
+
     conda install -c conda-forge cudatoolkit-dev -y
     ```
 * Dataset
+
   
-  TBD
+  To be released.
   
 * Pretrained weights
   
@@ -49,7 +50,7 @@
     git clone https://huggingface.co/HVSiniX/RawVideoDriven && ln -s RawVideoDriven/weights weights
     ```
 ## Training
-TBD
+To be released.
 ## Inference
 Currently only single-GPU inference is supported.
 
