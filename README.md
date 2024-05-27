@@ -16,7 +16,7 @@
 <table class="center">
 <tr>
     <td width=100% style="border: none">
-        <video controls autoplay loop src="https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c42abb91-585e-4ef8-acae-69d9ca510ef8
+        <video controls autoplay loop src="https://github.com/megvii-research/MegFaceAnimate/assets/29685592/90959508-42b2-4657-a879-dcff22df700f
 " muted="true"></video>
     </td>
 </tr>
