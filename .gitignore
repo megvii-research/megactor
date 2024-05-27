@@ -1,0 +1,18 @@
+# extensions
+*.egg-info
+*.py[cod]
+*.jpg
+*.png
+*.git
+*.log
+
+# envs
+.pt13
+.pt2
+
+# directories
+/checkpoints
+/dist
+/outputs
+/build
+/src

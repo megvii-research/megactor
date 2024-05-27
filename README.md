@@ -1,14 +1,10 @@
 
 ## Requirements
 
-see 'environment.yaml'
-
 you need to do this below
 ```
 conda env create -f environment.yaml
 pip install -U openmim
-# https://download.pytorch.org/whl/torch_stable.html
-# wget https://download.pytorch.org/whl/cu117/torchvision-0.15.1%2Bcu117-cp310-cp310-linux_x86_64.whl
 pip install torchvision-0.15.1%2Bcu117-cp310-cp310-linux_x86_64.whl
 
 mim install mmengine
