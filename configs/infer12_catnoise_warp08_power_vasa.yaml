@@ -1,0 +1,212 @@
+use_image_encoder: false
+
+# controlnet_type: '3d'
+# controlnet_config: 'configs/inference/sparse_control.yaml'
+
+# chose densepose, segface, dwpose, fromfile
+# pretrained_model_path: "runwayml/stable-diffusion-v1-5"
+pretrained_model_path: "./weights/StableDiffusion"
+pretrained_vae_path: "./weights/sd-vae-ft-mse"
+pretrained_controlnet_path: ""
+pretrained_appearance_encoder_path: "./weights/appearance_encoder"
+pretrained_unet_path: ""
+
+
+motion_module: ""
+
+appearance_controlnet_motion_checkpoint_path: "./weights/checkpoint-steps9000.ckpt"
+# 如果指定motion_module，appearance_controlnet_motion_checkpoint_path中的motion会被覆盖
+
+# set appearance time step, if not set , it will be None
+appearance_time_step: 0
+switch_control_to_source: true
+crop_face_center: true
+
+model_type: "unet_magic_noiseAttenST_Ada"
+# model_type: "unet_magic_noiseAttenST"
+
+use_2d_cross_rate: 0.2
+use_2d_rate: 1.0
+control_aux_type: "dwpose_all"
+remove_background: false
+remove_referencenet: false
+clip_image_type: "background"
+concat_noise_image_type: "origin"
+ref_image_type: "origin"
+add_noise_image_type: ""
+special_ref_index: 4
+valid_seed: 42
+save_every_image: true
+do_classifier_free_guidance: true
+
+savename: null
+
+fusion_blocks: "midup"
+
+seed:           [1]
+steps:          25
+guidance_scale: 4.5
+
+context:
+  context_frames: 8
+  context_stride: 1
+  context_overlap: 4
+
+# good_cases:
+#   - '2_Easy_3.mp4.mp4'
+#   - '2_Easy_8.mp4.mp4'
+#   - '2_Easy_9.mp4.mp4'
+#   - '2_Medium_EYE_1.mp4.mp4'
+#   - '2_Medium_EYE_2.mp4.mp4'
+#   - '2_Medium_EYE_3.mp4.mp4'
+#   - '3_Easy_1.mp4.mp4'
+#   - '3_Easy_2.mp4.mp4'
+#   - '3_Easy_6.mp4.mp4'
+#   - '3_Easy_8.mp4.mp4'
+#   - '3_Medium_EYE_10.mp4.mp4'
+#   - '3_Medium_EYE_2.mp4.mp4'
+#   - 'AI_girl1_Easy_8.mp4.mp4'
+#   - 'AI_girl1_Easy_9.mp4.mp4'
+#   - 'AI_girl1_Medium_EYE_2.mp4.mp4'
+#   - 'AI_girl1_Medium_EYE_3.mp4.mp4'
+#   - 'AI_girl2_Medium_EYE_2.mp4.mp4'
+#   - 'AI_girl3_Easy_10.mp4.mp4'
+#   - 'AI_girl3_Easy_1.mp4.mp4'
+#   - 'AI_girl3_Easy_2.mp4.mp4'
+#   - 'AI_girl3_Easy_6.mp4.mp4'
+#   - 'AI_girl3_Easy_8.mp4.mp4'
+#   - 'AI_girl3_Easy_9.mp4.mp4'
+#   - 'AI_girl3_Medium_EYE_10.mp4.mp4'
+#   - 'AI_girl3_Medium_EYE_1.mp4.mp4'
+#   - 'AI_girl3_Medium_EYE_2.mp4.mp4'
+#   - 'AI_girl3_Medium_EYE_3.mp4.mp4'
+#   - 'joker_Medium_EYE_10.mp4.mp4'
+#   - 'joker_Medium_EYE_1.mp4.mp4'
+#   - 'joker_Medium_EYE_2.mp4.mp4'
+#   - 'Miley_Cyrus_Flowers_Medium_EYE_1.mp4.mp4'
+#   - 'Miley_Cyrus_Flowers_Medium_EYE_2.mp4.mp4'
+
+
+source_image:
+  - '/data/VideoBMK/reference/EMO/AI_girl1.png'
+  # - '/data/VideoBMK/reference/EMO/AI_girl2.png'
+  - '/data/VideoBMK/reference/EMO/AI_girl3.png'
+  # - '/data/VideoBMK/reference/EMO/CXK.png'
+  # - '/data/VideoBMK/reference/EMO/David_Tao.PNG'
+  # - '/data/VideoBMK/reference/EMO/Dua_Lipa.PNG'
+  # - '/data/VideoBMK/reference/EMO/heben.PNG'
+  - '/data/VideoBMK/reference/EMO/joker.png'
+  # - '/data/VideoBMK/reference/EMO/juren.PNG'
+  # - '/data/VideoBMK/reference/EMO/Leonardo.png'
+  - '/data/VideoBMK/reference/EMO/Miley_Cyrus_Flowers.PNG'
+  # - '/data/VideoBMK/reference/EMO/monalisa.PNG'
+  # - '/data/VideoBMK/reference/EMO/ZGR.png'
+  # - '/data/VideoBMK/reference/x-portrait/1.png'
+  - '/data/VideoBMK/reference/x-portrait/2.png'
+  - '/data/VideoBMK/reference/x-portrait/3.png'
+  # - '/data/VideoBMK/reference/x-portrait/4.png'
+  # - '/data/VideoBMK/reference/x-portrait/5.png'
+  # - '/data/VideoBMK/reference/x-portrait/6.png'
+  # - '/data/VideoBMK/reference/x-portrait/7.png'
+  # - '/data/VideoBMK/reference/x-portrait/8.png'
+  # - '/data/VideoBMK/reference/x-portrait/9.png'
+
+
+
+video_path:
+  # - '/data/VideoBMK/Easy/10.mp4'
+  # - '/data/VideoBMK/Easy/1.mp4'
+  # - '/data/VideoBMK/Easy/2.mp4'
+  # - '/data/VideoBMK/Easy/3.mp4'
+  # - '/data/VideoBMK/Easy/4.mp4'
+  # - '/data/VideoBMK/Easy/5.mp4'
+  - '/data/VideoBMK/Easy/6.mp4'
+  - '/data/VideoBMK/Easy/7.mp4'
+  - '/data/VideoBMK/Easy/8.mp4'
+  - '/data/VideoBMK/Easy/9.mp4'
+  - '/data/VideoBMK/Medium_EYE/10.mp4'
+  - '/data/VideoBMK/Medium_EYE/1.mp4'
+  - '/data/VideoBMK/Medium_EYE/2.mp4'
+  - '/data/VideoBMK/Medium_EYE/3.mp4'
+  - '/data/VideoBMK/Medium_EYE/4.mp4'
+  - '/data/VideoBMK/Medium_EYE/5.mp4'
+  - '/data/VideoBMK/Medium_EYE/6.mp4'
+  - '/data/VideoBMK/Medium_EYE/7.mp4'
+  - '/data/VideoBMK/Medium_EYE/8.mp4'
+  - '/data/VideoBMK/Medium_EYE/9.mp4'
+  - '/data/VideoBMK/Medium_Head/10.mp4'
+  - '/data/VideoBMK/Medium_Head/1.mp4'
+  - '/data/VideoBMK/Medium_Head/2.mp4'
+  - '/data/VideoBMK/Medium_Head/3.mp4'
+  - '/data/VideoBMK/Medium_Head/4.mp4'
+  - '/data/VideoBMK/Medium_Head/5.mp4'
+  - '/data/VideoBMK/Medium_Head/6.mp4'
+  - '/data/VideoBMK/Medium_Head/7.mp4'
+  - '/data/VideoBMK/Medium_Head/8.mp4'
+  - '/data/VideoBMK/Medium_Head/9.mp4'
+  - '/data/VideoBMK/Medium_Rapid/1.mp4'
+  - '/data/VideoBMK/Medium_Rapid/2.mp4'
+  - '/data/VideoBMK/Medium_Rapid/3.mp4'
+  - '/data/VideoBMK/EMO_RAP/song_cxk_clean.mp4'
+  - '/data/VideoBMK/EMO_RAP/song_god_clean.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_2_fe_1.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_2_fe_2.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_2_fe_3.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_3_head_fe_1.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_3_head_fe_2.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_3_head_fe_3.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_4_head_fe_1.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_4_head_fe_2.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_4_head_fe_3.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_5_head_fe_1.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_5_head_fe_2.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_5_head_fe_3.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_8_head_fe_1.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_8_head_fe_2.mp4'
+  - '/data/VideoBMK/X-portrait/tt_extreme_8_head_fe_3.mp4'
+
+
+  
+inference_config: "configs/inference/magic_inference.yaml"
+size: [512, 512]
+# 长度一致
+L:    16
+S:    1
+I:    0
+clip: 0
+offset: 0
+max_length: null
+video_type: "condition"
+invert_video: false
+save_individual_videos: true
+
+unet_additional_kwargs:
+  unet_use_cross_frame_attention: false
+  unet_use_temporal_attention: false
+  use_motion_module: true
+  motion_module_resolutions:
+  - 1
+  - 2
+  - 4
+  - 8
+  motion_module_mid_block: false
+  motion_module_decoder_only: false
+  motion_module_type: Vanilla
+  motion_module_kwargs:
+    num_attention_heads: 8
+    num_transformer_block: 1
+    attention_block_types:
+    - Temporal_Self
+    - Temporal_Self
+    temporal_position_encoding: true
+    temporal_position_encoding_max_len: 32
+    temporal_attention_dim_div: 1
+  # Addition for image embeddings
+  use_image_condition            : true
+  use_refer_ada: true
+
+
+noise_scheduler_kwargs:
+  beta_start: 0.00085
+  beta_end: 0.012
+  beta_schedule: "linear"
