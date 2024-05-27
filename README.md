@@ -2,7 +2,8 @@
 
 <p align=center>Shurong yang, Huadong Li, Juhao Wu, Minhao Jing, Linze Li, Renhe Ji, Jiajun Liang, Haoqiang Fan</p>
 
-<p align=center>MEGVII Technology</p>
+**<p align=center>MEGVII Technology</p>**
+
 
 ## News & TODO List
 - **[✅2024.05.24]** Inference settings are released.
@@ -63,5 +64,5 @@ Many thanks to the authors of [mmengine](https://github.com/open-mmlab/mmengine)
 
 
 ## Contact
-If you have any questions, feel free to open an issue or contact us at lihuadong@megvii.com or wujuhao@megvii.com.
+If you have any questions, feel free to open an issue or contact us at 15066146083@163.com, lihuadong@megvii.com or wujuhao@megvii.com.
 
