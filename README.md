@@ -1,3 +1,9 @@
+## <p align=center>MegActor: Harness the Power of Raw Video for Vivid Portrait Animation</p>
+
+<p align=center>Shurong yang, Huadong Li, Juhao Wu, Minhao Jing, Linze Li, Renhe Ji, Jiajun Liang, Haoqiang Fan</p>
+
+<p align=center>MEGVII Technology</p>
+
 ## News & TODO List
 - **[2024.05.24]** Inference settings are released.
 
