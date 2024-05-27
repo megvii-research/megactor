@@ -1,27 +1,62 @@
+## News & TODO List
+- **[2024.05.24]** Inference settings are released.
 
-## Requirements
+- **[TBD]** Data curation pipeline to be released .
 
-you need to do this below
-```
-conda env create -f environment.yaml
-pip install -U openmim
-pip install torchvision-0.15.1%2Bcu117-cp310-cp310-linux_x86_64.whl
+- **[TBD]** Training setup to be released.
 
-mim install mmengine
-mim install "mmcv>=2.0.1"
-mim install "mmdet>=3.1.0"
-mim install "mmpose>=1.1.0"
+## Pre-generated results
 
-conda install -c conda-forge cudatoolkit-dev -y
-pip3 install deepspeed
-```
+<table class="center">
+<tr>
+    <td width=100% style="border: none">
+        <video controls autoplay loop src="https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c42abb91-585e-4ef8-acae-69d9ca510ef8
+" muted="true"></video>
+    </td>
+</tr>
+</table>
 
-```bash
-git clone https://huggingface.co/HVSiniX/RawVideoDriven && ln -s RawVideoDriven/weights weights
-```
+## Preparation
+* Environments
+  
+  Detailed environment settings should be found with environment.yaml
+    ```
+    conda env create -f environment.yaml
+    pip install -U openmim
+    pip install torchvision-0.15.1%2Bcu117-cp310-cp310-linux_x86_64.whl
+    
+    mim install mmengine
+    mim install "mmcv>=2.0.1"
+    mim install "mmdet>=3.1.0"
+    mim install "mmpose>=1.1.0"
+    
+    conda install -c conda-forge cudatoolkit-dev -y
+    pip3 install deepspeed
+    ```
+* Dataset
+  
+  TBD
+  
+* Pretrained weights
+  
+  Please find our pretrained weights at https://huggingface.co/HVSiniX/RawVideoDriven.
+  Or simply use
+    ```bash
+    git clone https://huggingface.co/HVSiniX/RawVideoDriven && ln -s RawVideoDriven/weights weights
+    ```
+## Training
+TBD
+## Inference
+Currently only single-CPU inference is supported.
 
-## Inference example
+    CUDA_VISIBLE_DEVICES=0 python eval.py --config configs/infer12_catnoise_warp08_power_vasa.yaml --source {source image path} --driver {driving video path}
 
-```bash
-CUDA_VISIBLE_DEVICES=0 python eval.py --config configs/infer12_catnoise_warp08_power_vasa.yaml --source new_test_data/vasa_case1.mp4 --driver new_test_data/vasa_case1.mp4
-```
+
+## Acknowledgement
+Many thanks to the authors of [mmengine](https://github.com/open-mmlab/mmengine), [MagicAnimate](https://github.com/magic-research/magic-animate), [Controlnet_aux](https://github.com/huggingface/controlnet_aux), and [Detectron2](https://github.com/facebookresearch/detectron2).
+
+
+
+## Contact
+If you have any questions, feel free to open an issue or contact us at lihuadong@megvii.com or wujuhao@megvii.com.
+
