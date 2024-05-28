@@ -13,7 +13,8 @@
 - **[❌]** Training setup to be released.
   
 ## Overview
-![Model](https://github.com/megvii-research/MegFaceAnimate/assets/29685592/a3cf55a9-9838-400a-a2e3-281acca11b76)
+
+  ![Model](https://github.com/megvii-research/MegFaceAnimate/assets/29685592/857c7a9f-6231-4e7f-bfce-1e279ba57c89)
 
 MegActor is an intermediate-representation-free portrait animator that uses the original video, rather than intermediate features, as the driving factor to generate realistic and vivid talking head videos. Specifically, we utilize two UNets: one extracts the identity and background features from the source image, while the other accurately generates and integrates motion features directly derived from the original videos. MegActor can be trained on low-quality, publicly available datasets and excels in facial expressiveness, pose diversity, subtle controllability, and visual quality.
 
@@ -42,6 +43,7 @@ https://github.com/megvii-research/MegFaceAnimate/assets/29685592/6d3edec7-1008-
 
   
   To be released.
+
   
 * Pretrained weights
   
