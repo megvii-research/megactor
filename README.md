@@ -23,6 +23,15 @@ MegActor is an intermediate-representation-free portrait animator that uses the 
 
 https://github.com/megvii-research/MegFaceAnimate/assets/29685592/6d3edec7-1008-4fde-93ee-a0598114120b
 
+https://github.com/megvii-research/MegFaceAnimate/assets/29685592/b2eb4e5f-c1fc-4874-8af9-c4b14afaea4b
+
+https://github.com/megvii-research/MegFaceAnimate/assets/29685592/212c7669-0839-4260-a7c4-94606818e61f
+
+https://github.com/megvii-research/MegFaceAnimate/assets/29685592/ce4e5c19-cdc7-435e-83f3-8bce39f0c04e
+
+https://github.com/megvii-research/MegFaceAnimate/assets/29685592/45043598-4f9b-4490-9686-fa3be4c361c0
+
+https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c7d71435-c98a-42b6-9f59-c72cb49851a1
 
 ## Preparation
 * Environments
@@ -49,9 +58,11 @@ https://github.com/megvii-research/MegFaceAnimate/assets/29685592/6d3edec7-1008-
   
   Please find our pretrained weights at https://huggingface.co/HVSiniX/RawVideoDriven.
   Or simply use
+  
     ```bash
     git clone https://huggingface.co/HVSiniX/RawVideoDriven && ln -s RawVideoDriven/weights weights
     ```
+    
 ## Training
 To be released.
 ## Inference
