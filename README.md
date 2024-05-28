@@ -20,16 +20,9 @@ MegActor is an intermediate-representation-free portrait animator that uses the 
 
 
 ## Pre-generated results
-
-https://github.com/megvii-research/MegFaceAnimate/assets/29685592/6d3edec7-1008-4fde-93ee-a0598114120b
-
-https://github.com/megvii-research/MegFaceAnimate/assets/29685592/b2eb4e5f-c1fc-4874-8af9-c4b14afaea4b
-
-https://github.com/megvii-research/MegFaceAnimate/assets/29685592/212c7669-0839-4260-a7c4-94606818e61f
+https://github.com/megvii-research/MegFaceAnimate/assets/29685592/1b9dc77c-50da-48bd-bb16-8b2dd56d703f
 
 https://github.com/megvii-research/MegFaceAnimate/assets/29685592/ce4e5c19-cdc7-435e-83f3-8bce39f0c04e
-
-https://github.com/megvii-research/MegFaceAnimate/assets/29685592/45043598-4f9b-4490-9686-fa3be4c361c0
 
 https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c7d71435-c98a-42b6-9f59-c72cb49851a1
 
@@ -75,7 +68,9 @@ Currently only single-GPU inference is supported.
 Many thanks to the authors of [mmengine](https://github.com/open-mmlab/mmengine), [MagicAnimate](https://github.com/magic-research/magic-animate), [Controlnet_aux](https://github.com/huggingface/controlnet_aux), and [Detectron2](https://github.com/facebookresearch/detectron2).
 
 
-
 ## Contact
 If you have any questions, feel free to open an issue or contact us at 15066146083@163.com, lihuadong@megvii.com or wujuhao@megvii.com.
+
+
+
 
