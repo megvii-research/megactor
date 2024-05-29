@@ -73,7 +73,7 @@ def save_videos_grid(videos: torch.Tensor, path: str, rescale=False, n_rows=6, f
         
         outputs.append(x)
 
-    os.makedirs(os.path.dirname(path), exist_ok=True)
+    # os.makedirs(os.path.dirname(path), exist_ok=True)
     if fps is None:
         fps = (video_length // 2) if video_length > 1 else 1
     

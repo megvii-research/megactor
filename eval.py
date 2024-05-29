@@ -31,13 +31,16 @@ def main(args):
     func_args = dict(func_args)
 
     config = OmegaConf.load(args.config)
-    device = torch.device(f"cuda:0")
+    device = torch.device(f"cpu")
     weight_type = torch.float16
 
     test_video_path = args.driver
     source_image_path = args.source
-    num_actual_inference_steps = config.get(
-        "num_actual_inference_steps", config.steps)
+    output_path = args.output_path
+    seed = args.seed
+    guidance_scale = args.guidance_scale
+    num_steps = args.num_steps
+
 
     do_classifier_free_guidance = config.get(
         "do_classifier_free_guidance", True
@@ -91,7 +94,7 @@ def main(args):
         image_encoder.requires_grad_(False)
         # face_detector = facer.face_detector('retinaface/mobilenet', device=device)
 
-    random_seed = config.get("valid_seed", [-1])
+    random_seed = seed
     size = config.size
     steps = config.S
 
@@ -110,7 +113,7 @@ def main(args):
     # Load control and source image
     if test_video_path.endswith('.mp4') or test_video_path.endswith('.gif'):
         print('Control Condition', test_video_path)
-        control = VideoReader(test_video_path).read()
+        control = VideoReader(test_video_path).read()[::10]
         video_length = control.shape[0]
         print('control', control.shape)
     else:
@@ -223,15 +226,14 @@ def main(args):
                 image_prompt_embeddings = torch.cat([image_emb, image_emb])
 
     context=config.context
-    # context['context_frames'] = 1
     with torch.inference_mode():
         source_image = rearrange(source_image, 'b h w c -> b c h w')
         samples_per_video = pipeline.infer(
             source_image=source_image,
             image_prompts=image_prompt_embeddings,
             motion_sequence=pixel_values_pose,
-            step=config.steps,
-            guidance_scale=config.guidance_scale,
+            step=num_steps,
+            guidance_scale=guidance_scale,
             random_seed=random_seed,
             context=context,
             size=config.size,
@@ -240,39 +242,29 @@ def main(args):
             do_classifier_free_guidance=do_classifier_free_guidance,
             add_noise_image_type=add_noise_image_type,
             ref_img_condition=ref_img_condition,
-            visualization=True
+            visualization=False
         )
 
-        if control_aux_type == "densepose_dwpose_concat":
-            control_condition = torch.tensor(control_condition).unsqueeze(0)
-            control_condition = rearrange(control_condition, 'b t h w c -> b c t h w') / 255.
-            samples_per_video[1] = control_condition
-        
-
-        # shape need to be 1 c t h w
-        source_image = np.array(source_image_pil) # h w c
-        source_image = torch.Tensor(source_image).unsqueeze(
-                    0) / 255.
-        source_image = source_image.repeat(video_length, 1, 1, 1)
-        samples_per_video[0] = rearrange(source_image, "t h w c -> 1 c t h w") 
-        
-        control = torch.tensor(control).unsqueeze(0)
-        control = rearrange(control, 'b t h w c -> b c t h w') / 255.
-        samples_per_video.insert(0, control)
-        samples_per_video = torch.cat(samples_per_video)
-
-    video_name = os.path.basename(test_video_path)[:-4]
-    source_name = os.path.basename(
-        source_image_path).split(".")[0]
-    save_videos_grid(
-        samples_per_video[:, :, 1:, ...], f"./{source_name}_{video_name}.mp4", save_every_image=False, fps=8)
+    if output_path != '':
+        save_videos_grid(
+            samples_per_video[:, :, 1:, ...], output_path, save_every_image=False, fps=25)
+    else:
+        video_name = os.path.basename(test_video_path)[:-4]
+        source_name = os.path.basename(
+            source_image_path).split(".")[0]
+        save_videos_grid(
+            samples_per_video[:, :, 1:, ...], f"./{source_name}_{video_name}.mp4", save_every_image=False, fps=25)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", type=str, required=True, help='指定infer使用的config路径 *.yaml')
-    parser.add_argument("--source", type=str, required=True, help='指定source图像路径，可选择图像或视频')
-    parser.add_argument("--driver", type=str, required=True, help='指定driver视频路径')
+    parser.add_argument("--config", type=str, required=True, help='Specify path of the config yaml for inference.')
+    parser.add_argument("--source", type=str, required=True, help='Specify the source path, can be video (will use the first frame) or image.')
+    parser.add_argument("--driver", type=str, required=True, help='Specify the driving video path.')
+    parser.add_argument("--output-path", type=str, default='', help='Specify the result video path.')
+    parser.add_argument("--seed", type=int, default=42, help='Specify random seed.')
+    parser.add_argument("--guidance-scale", type=float, default=4.5, help='Specify classifier-free guidance scale.')
+    parser.add_argument("--num-steps", type=int, default=25, help='Specify steps of denoising, more steps take more time to yield better result.')
 
     args = parser.parse_args()
     main(args)

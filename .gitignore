@@ -8,6 +8,7 @@
 # envs
 .pt13
 .pt2
+*__pycache__*
 
 # directories
 /checkpoints

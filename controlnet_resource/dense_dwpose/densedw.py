@@ -5,9 +5,9 @@ import numpy as np
 
 class DenseDWposePredictor:
     def __init__(self, device, resolution = [512, 512]) -> None:
-        det_config = './controlnet_resource/controlnet_aux/src/controlnet_aux/dwpose/yolox_config/yolox_l_8xb8-300e_coco.py'
+        det_config = './controlnet_resource/controlnet_aux/yolox_config/yolox_l_8xb8-300e_coco.py'
         det_ckpt = './weights/aux/yolox_l_8x8_300e_coco_20211126_140236-d3bd2b23.pth'
-        pose_config = './controlnet_resource/controlnet_aux/src/controlnet_aux/dwpose/dwpose_config/dwpose-l_384x288.py'
+        pose_config = './controlnet_resource/controlnet_aux/dwpose_config/dwpose-l_384x288.py'
         pose_ckpt = './weights/aux/dw-ll_ucoco_384.pth'
         dense_weight_path = "./weights/aux/densepose_model.pkl"
         self.resolution = resolution
