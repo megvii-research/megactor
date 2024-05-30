@@ -31,7 +31,7 @@ def main(args):
     func_args = dict(func_args)
 
     config = OmegaConf.load(args.config)
-    device = torch.device(f"cpu")
+    device = torch.device(f"cuda:0")
     weight_type = torch.float16
 
     test_video_path = args.driver
@@ -189,7 +189,6 @@ def main(args):
             one_img_have_more = True
         ref_concat_image_noises = rearrange(ref_concat_image_noises, 'b h w c -> b c h w')
         ref_concat_image_noises = ref_concat_image_noises / 127.5 - 1
-        # print('ref_img_backgrounds unique is', ref_img_backgrounds.unique())
         ref_concat_image_noises_latents = pipeline.vae.encode(ref_concat_image_noises).latent_dist
         ref_concat_image_noises_latents = ref_concat_image_noises_latents.sample().unsqueeze(2)
         ref_concat_image_noises_latents = ref_concat_image_noises_latents * 0.18215
@@ -201,7 +200,6 @@ def main(args):
         ref_img_back_mask_latents = torch.tensor(np.array(ref_img_background_mask)[None, ...].transpose(0, 3, 1, 2)).to(device, dtype=weight_type)
         H, W = ref_concat_image_noises_latents.shape[3:]
         ref_img_back_mask_latents = F.interpolate(ref_img_back_mask_latents, size=(H, W), mode='nearest').unsqueeze(2)
-        # print('infer ref_img_back_mask_latents unique is', ref_image_back_mask_latents.unique())
         ref_concat_image_noises_latents = torch.cat([
             ref_concat_image_noises_latents, ref_img_back_mask_latents
         ], dim=1).repeat(1, 1, video_length, 1, 1)

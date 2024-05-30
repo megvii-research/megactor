@@ -26,7 +26,6 @@ from accelerate.utils import set_seed
 from animate.utils.videoreader import VideoReader
 from animate.utils.util import get_checkpoint
 from einops import rearrange, repeat
-from refile import smart_open, smart_load_from
 import io
 
 from .resnet import InflatedConv3d
@@ -160,7 +159,7 @@ class MagicAnimate(torch.nn.Module):
             if is_main_process:
                 print(f"load all model from checkpoint: {appearance_controlnet_motion_checkpoint_path}")
 
-            with smart_open(appearance_controlnet_motion_checkpoint_path, 'rb') as f:
+            with open(appearance_controlnet_motion_checkpoint_path, 'rb') as f:
                 buffer = io.BytesIO(f.read())
                 appearance_controlnet_motion_checkpoint_path = torch.load(buffer, map_location="cpu")
             if "global_step" in appearance_controlnet_motion_checkpoint_path and is_main_process:
