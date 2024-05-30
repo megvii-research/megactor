@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="MegActor: Harness the Power of Raw Video for Vivid Portrait Animation">
+  <meta name="keywords" content="Diffusion models, Generative models, Portrait animator, Video generation">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MegActor: Harness the Power of Raw Video for Vivid Portrait Animation</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <!-- <link rel="icon" href="./static/images/favicon.svg"> -->
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">MegActor: Harness the Power of Raw Video for Vivid Portrait Animation</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              Shurong yang<sup>*</sup>,</span>
+            <span class="author-block">
+              Huadong Li<sup>*</sup>,</span>
+            <span class="author-block">
+              Juhao Wu<sup>*</sup>,
+            </span>
+            <span class="author-block">
+              Minhao Jing<sup>*†</sup>,
+            </span>
+            <span class="author-block">
+              Linze Li<sup></sup>,
+            </span>
+            <span class="author-block">
+              Renhe Ji<sup>‡</sup>,
+            </span>
+          </span>
+          <span class="author-block">
+            Jiajun Liang<sup>‡</sup>,
+          </span>
+          <span class="author-block">
+            Haoqiang Fan<sup></sup>
+          </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><b>Megvii Research</b></span><br>
+            <span class="author-block" style="font-size: medium"><sup>*</sup>Equal contribution</b></span>
+            <span class="author-block" style="font-size: medium"><sup>†</sup>Lead this project</b></span>
+            <span class="author-block" style="font-size: medium"><sup>‡</sup>Corresponding author</b></span>
+          </div>
+
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+
+              <!-- <span class="link-block">
+                <a href="https://arxiv.org/pdf/2011.12948"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper()</span>
+                </a>
+              </span> -->
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2011.12948"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv (Coming soon)</span>
+                </a>
+              </span>
+
+              <!-- <span class="link-block">
+                <a href="https://www.youtube.com/watch?v=MrKrnHhk8IA"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span> -->
+
+              <span class="link-block">
+                <a href="https://github.com/megvii-research/MegFaceAnimate"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+
+              <!-- <span class="link-block">
+                <a href="https://github.com/google/nerfies/releases/tag/0.1"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="far fa-images"></i>
+                  </span>
+                  <span>Data</span>
+                  </a></span> -->
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <video id="teaser" autoplay muted loop playsinline height="100%">
+        <source src="./static/videos/traindataset7-2024-05-29T19-16-24.mp4"
+                type="video/mp4">
+      </video>
+      <video id="teaser" autoplay muted loop playsinline height="100%">
+        <source src="./static/videos/traindataset49-2024-05-29T19-16-48.mp4"
+                type="video/mp4">
+      </video>
+      <h2 class="subtitle has-text-centered">
+        <span class="dnerf">MegActor</span> animates portrait with the original driving video.
+      </h2>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Introduction</h2>
+        <div class="content has-text-justified">
+          <p>
+            Despite raw driving videos containing richer information on facial expressions than intermediate representations such as landmarks in the field of portrait animation, they are seldom the subject of research. This is due to two challenges inherent in portrait animation driven with raw videos: 1) significant identity leakage; 2) irrelevant background and facial details such as wrinkles degrade performance.         
+           </p>
+          <p>
+            To harness the power of raw videos for vivid portrait animation, we proposed a pioneering conditional diffusion model named MegActor. First, we introduced a synthetic data generation framework for creating videos with consistent motion and expressions but inconsistent IDs to mitigate the issue of ID leakage. Second, we segmented the foreground and background of the reference image and employed CLIP to encode the background details. This encoded information is then integrated into the network via a text embedding module, thereby ensuring the stability of the background.
+          </p>
+          <p>
+            Finally, we further style transfer the appearance of the reference image to the driving video to eliminate the influence of facial details in the driving videos. Our final model was trained solely on public datasets, achieving results comparable to commercial models. We hope this will help the open-source community.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+
+
+<h2 class="title is-3 " align="center">Emoji-driven examples</h2>
+<div class="content has-text-justified">
+  <p>
+    With <span class="dnerf">MegActor</span>, people can migrate the motion of their favorite emojis to their own portraits..
+  </p>
+</div>
+<section class="hero is-light is-small">
+  <div class="hero-body">
+    <div class="container">
+      <div id="results-carousel" class="carousel results-carousel">
+        <div class="item item-steve">
+          <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/chenglong.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-chair-tp">
+          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/jinxing.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-shiba">
+          <video poster="" id="shiba" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/zhouxingchi.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-fullbody">
+          <video poster="" id="fullbody" autoplay controls muted loop playsinline height="100%">
+            <source src="./static/videos/huangxiaoming.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+
+    <!-- Animation. -->
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3" align="center">VASA-1 Cases</h2>
+
+        <!-- Re-rendering. -->
+        <!-- <h3 class="title is-4">Re-rendering the input video</h3> -->
+        <div class="content has-text-centered">
+          <video id="replay-video" controls muted preload playsinline width="100%">
+            <source src="./static/videos/demo1.mp4" type="video/mp4">
+          </video>
+          <video id="replay-video" controls muted preload playsinline width="100%">
+            <source src="./static/videos/demo2.mp4" type="video/mp4">
+          </video>
+          <video id="replay-video" controls muted preload playsinline width="100%">
+            <source src="./static/videos/demo3.mp4" type="video/mp4">
+          </video>
+        </div>
+        <!--/ Re-rendering. -->
+
+      </div>
+    </div>
+    <!--/ Animation. -->
+
+
+    <!-- Animation. -->
+    <div class="columns is-centered">
+      <div class="column"  width="75%">
+        <h2 class="title is-3" align="center">EMO Cases</h2>
+
+        <!-- Interpolating. -->
+        <!-- <h3 class="title is-4">Self driven of EMO results</h3> -->
+        <section class="hero is-light is-small">
+          <div class="hero-body">
+            <div class="container">
+              <div id="results-carousel" class="carousel results-carousel">
+                <div class="item item-1">
+                  <video poster="" id="emo1" autoplay controls muted loop playsinline height="100%">
+                    <source src="./static/videos/EMO/EMO_AI_girl2_EMO_AI_girl2-2024-05-30T14-48-46.mp4"
+                            type="video/mp4">
+                  </video>
+                </div>
+                <div class="item item-1">
+                  <video poster="" id="emo2" autoplay controls muted loop playsinline height="100%">
+                    <source src="./static/videos/EMO/EMO_AI_girl3_EMO_AI_girl3-2024-05-30T14-48-46.mp4"
+                            type="video/mp4">
+                  </video>
+                </div>
+                <div class="item item-1">
+                  <video poster="" id="emo3" autoplay controls muted loop playsinline height="100%">
+                    <source src="./static/videos/EMO/EMO_CXK_song_cxk_clean-2024-05-30T14-48-46.mp4"
+                            type="video/mp4">
+                  </video>
+                </div>
+                <div class="item item-1">
+                  <video poster="" id="emo4" autoplay controls muted loop playsinline height="100%">
+                    <source src="./static/videos/EMO/EMO_joker_EMO_joker-2024-05-30T14-48-46.mp4"
+                            type="video/mp4">
+                  </video>
+                </div>
+                <div class="item item-1">
+                  <video poster="" id="emo5" autoplay controls muted loop playsinline height="100%">
+                    <source src="./static/videos/EMO/EMO_Leonardo_song_god_clean-2024-05-30T14-48-46.mp4"
+                            type="video/mp4">
+                  </video>
+                </div>
+                <div class="item item-1">
+                  <video poster="" id="emo6" autoplay controls muted loop playsinline height="100%">
+                    <source src="./static/videos/EMO/heben_heben_full-2024-05-30T14-48-46.mp4"
+                            type="video/mp4">
+                  </video>
+                </div>
+                <div class="item item-1">
+                  <video poster="" id="emo7" autoplay controls muted loop playsinline height="100%">
+                    <source src="./static/videos/EMO/Miley_Cyrus_Flowers_Miley_Cyrus_Flowers_full-2024-05-30T14-48-46.mp4"
+                            type="video/mp4">
+                  </video>
+                </div>
+                <div class="item item-1">
+                  <video poster="" id="emo8" autoplay controls muted loop playsinline height="100%">
+                    <source src="./static/videos/EMO/ZGR_ZGR-2024-05-30T14-48-46.mp4"
+                            type="video/mp4">
+                  </video>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!--/ Interpolating. -->
+
+      </div>
+    </div>
+    <!--/ Animation. -->
+    
+
+  </div>
+</section>
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@article{park2021nerfies,
+  author    = {Park, Keunhong and Sinha, Utkarsh and Barron, Jonathan T. and Bouaziz, Sofien and Goldman, Dan B and Seitz, Steven M. and Martin-Brualla, Ricardo},
+  title     = {Nerfies: Deformable Neural Radiance Fields},
+  journal   = {ICCV},
+  year      = {2021},
+}</code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+
+          <p>
+            This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template"
+              target="_blank">Academic Project Page Template</a> which was adopted from the <a
+              href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+            You are free to borrow the of this website, we just ask that you link back to this page in the footer.
+            <br> This website is licensed under a <a rel="license"
+              href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
+              Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
