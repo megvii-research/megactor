@@ -6,6 +6,10 @@
 
   <p align=center><sup>*</sup>Equal contribution  <sup>†</sup>Lead this project <sup>‡</sup>Corresponding author</p>
 
+  <br>
+  <a href='https://megvii-research.github.io/MegFaceAnimate/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>
+  <br>
+
 ## News & TODO List
 - **[✅2024.05.24]** Inference settings are released.
 
