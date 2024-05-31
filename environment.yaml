@@ -1,4 +1,4 @@
-name: test
+name: megactor
 channels:
   - pytorch
   - nvidia
