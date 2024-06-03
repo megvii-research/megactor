@@ -74,6 +74,17 @@ For gradio interface, please run
 
     python demo/run_gradio.py
 
+## BibTeX
+```
+@misc{yang2024megactor,
+      title={MegActor: Harness the Power of Raw Video for Vivid Portrait Animation}, 
+      author={Shurong Yang and Huadong Li and Juhao Wu and Minhao Jing and Linze Li and Renhe Ji and Jiajun Liang and Haoqiang Fan},
+      year={2024},
+      eprint={2405.20851},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+```
 
 ## Acknowledgement
 Many thanks to the authors of [mmengine](https://github.com/open-mmlab/mmengine), [MagicAnimate](https://github.com/magic-research/magic-animate), [Controlnet_aux](https://github.com/huggingface/controlnet_aux), and [Detectron2](https://github.com/facebookresearch/detectron2).
