@@ -35,9 +35,8 @@ https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c7d71435-c98a-
 ## Preparation
 * Environments
   
-  Currently only Linux setup has been validated.
-  
   Detailed environment settings should be found with environment.yaml
+  * Linux
     ```
     conda env create -f environment.yaml
     pip install -U openmim
