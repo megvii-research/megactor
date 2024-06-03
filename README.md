@@ -92,7 +92,7 @@ Many thanks to the authors of [mmengine](https://github.com/open-mmlab/mmengine)
 
 
 ## Contact
-If you have any questions, feel free to open an issue or contact us at 15066146083@163.com, lihuadong@megvii.com or wujuhao@megvii.com.
+If you have any questions, feel free to open an issue or contact us at yangshurong6894@gmail.com, lihuadong@megvii.com or wujuhao@megvii.com.
 
 
 
