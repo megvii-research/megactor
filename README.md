@@ -1,3 +1,5 @@
+<div  align=center><img src="https://github.com/megvii-research/MegFaceAnimate/assets/29685592/5687c444-d437-4387-8219-61392cfa0dcf" width="15%"></div>
+
 ## <p align=center>MegActor: Harness the Power of Raw Video for Vivid Portrait Animation</p>
 
 <p align=center>Shurong Yang<sup>*</sup>, Huadong Li<sup>*</sup>, Juhao Wu<sup>*</sup>, Minhao Jing<sup>*†</sup>, Linze Li, Renhe Ji<sup>‡</sup>, Jiajun Liang<sup>‡</sup>, Haoqiang Fan</p>
@@ -17,9 +19,19 @@
 - **[❌]** Data curation pipeline to be released .
 
 - **[❌]** Training setup to be released.
-  
-## Overview
 
+
+
+## **MegActor Features:**
+
+**Usability**: animates a portrait with video while ensuring **consistent motion**.
+
+**Reproducibility**: fully open-source and trained on **publicly available** datasets.
+
+**Efficiency**: ⚡**200 V100 hours** of training to achieve pleasant motions on portraits.
+
+
+## Overview
   ![Model](https://github.com/megvii-research/MegFaceAnimate/assets/29685592/857c7a9f-6231-4e7f-bfce-1e279ba57c89)
 
 MegActor is an intermediate-representation-free portrait animator that uses the original video, rather than intermediate features, as the driving factor to generate realistic and vivid talking head videos. Specifically, we utilize two UNets: one extracts the identity and background features from the source image, while the other accurately generates and integrates motion features directly derived from the original videos. MegActor can be trained on low-quality, publicly available datasets and excels in facial expressiveness, pose diversity, subtle controllability, and visual quality.
@@ -93,6 +105,9 @@ Many thanks to the authors of [mmengine](https://github.com/open-mmlab/mmengine)
 
 ## Contact
 If you have any questions, feel free to open an issue or contact us at yangshurong6894@gmail.com, lihuadong@megvii.com or wujuhao@megvii.com.
+
+
+
 
 
 
