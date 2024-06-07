@@ -15,6 +15,7 @@
 
 ## News & TODO List
 - **[✅2024.05.24]** Inference settings are released.
+- **[✅2024.05.31]** ![Arxiv](https://arxiv.org/abs/2405.20851) paper are released.
 
 - **[❌]** Data curation pipeline to be released .
 
