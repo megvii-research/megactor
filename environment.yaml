@@ -161,7 +161,6 @@ dependencies:
       - lazy-loader==0.3
       - lightning-utilities==0.11.0
       - lit==17.0.6
-      - lovelive-sdk==1.82.68
       - lz4==4.3.3
       - markdown==3.5.1
       - markdown-it-py==3.0.0
