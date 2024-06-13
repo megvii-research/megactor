@@ -16,8 +16,7 @@
 ## News & TODO List
 - **[✅2024.05.24]** Inference settings are released.
 - **[✅2024.05.31]** [Arxiv](https://arxiv.org/abs/2405.20851) paper are released.
-
-- **[❌]** Data curation pipeline to be released .
+- **[✅2024.06.13]** [Data curation pipeline](https://github.com/megvii-research/megactor/tree/main/data_processing) are released .
 
 - **[❌]** Training setup to be released.
 
@@ -61,10 +60,8 @@ https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c7d71435-c98a-
 
     conda install -c conda-forge cudatoolkit-dev -y
     ```
-* Dataset
-
-  
-  To be released.
+* Dataset.
+   * For a detailed description of the data processing procedure, please refer to the accompanying below. [Data Process Pipeline](https://github.com/megvii-research/megactor/tree/main/data_processing)
 
   
 * Pretrained weights
