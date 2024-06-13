@@ -73,7 +73,7 @@ python3 3.style_transfer.py --tarfile ./VFHQ/group124_dwpose.tar --dstfile ./VFH
 
 ### 4.0 Synthesizing face-swapping data
 
-The face-swapping example code is provided below, with the requirement to install![FaceFusion](https://github.com/facefusion/facefusion)
+The face-swapping example code is provided below, with the requirement to install [FaceFusion](https://github.com/facefusion/facefusion)
 
 ```
 git clone https://github.com/facefusion/facefusion
@@ -88,7 +88,7 @@ python3 4.0 face_fusion.py --tar ./VFHQ/group124_dwpose_style.tar --dstfile ./VF
 
 ### 5.0 Eye-tracking data filtering strategy.
 
-Eye-tracking data curation requires the installation of the ![L2CS-Net](https://github.com/Ahmednull/L2CS-Net)
+Eye-tracking data curation requires the installation of the  [L2CS-Net](https://github.com/Ahmednull/L2CS-Net)
 
 ```
 git clone https://github.com/Ahmednull/L2CS-Net
