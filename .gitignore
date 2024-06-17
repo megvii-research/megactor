@@ -1,6 +1,8 @@
 # extensions
 *.egg-info
-*.py[cod]
+*.pyo
+*.pyc
+*.pyd
 *.jpg
 *.git
 *.log

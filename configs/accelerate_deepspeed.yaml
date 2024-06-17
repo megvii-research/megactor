@@ -1,0 +1,35 @@
+compute_environment: LOCAL_MACHINE
+deepspeed_config: 
+  {
+    "fp16": {
+        "enabled": true
+    },
+    "zero_optimization": {
+        "stage": 2,
+        "allgather_partitions": true,
+        "allgather_bucket_size": 5e8,
+        "overlap_comm": true,
+        "reduce_scatter": true,
+        "reduce_bucket_size": 5e8,
+        "contiguous_gradients": true
+    },
+    "train_batch_size": "auto",
+    "train_micro_batch_size_per_gpu": "auto",
+    "wall_clock_breakdown": false,
+    "zero_allow_untested_optimizer": true,
+  }
+
+distributed_type: DEEPSPEED
+# downcast_bf16: 'no'
+# fsdp_config: {}
+# gpu_ids: 0,1,2,3
+# machine_rank: 0
+# main_process_ip: null
+# main_process_port: null
+# main_training_function: main
+# mixed_precision: fp16
+# num_machines: 1
+num_processes: 4
+# rdzv_backend: static
+# same_network: true
+# use_cpu: false

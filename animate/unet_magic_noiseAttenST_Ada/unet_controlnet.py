@@ -313,6 +313,7 @@ class ConvInputLayer(nn.Module):
         if self.use_refer_ada:
             x_ref_feat = self.refer_convs(x_ref)
             x_ref_feat = x_ref_feat.view(batch, -1)
+            # print(x.shape, x_ref.shape, x_ref_feat.shape)
             # x_ref_feat = self.refer_linears(x_ref_feat).unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)
             x_ref_feat = self.refer_linears(x_ref_feat)
             x_ref_feat = self.refer_linears_out(x_ref_feat).unsqueeze(-1).unsqueeze(-1).unsqueeze(-1)

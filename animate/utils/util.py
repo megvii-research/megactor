@@ -266,7 +266,7 @@ def apply_transforms(image, params=None):
 
         # Resize the image while preserving aspect ratio
         target_size = (H, int(params['aspect_ratio']*W)) if params['aspect_ratio'] <= 1. else (int(H/params['aspect_ratio']), W)
-        resized_image = TF.resize(image, target_size)
+        resized_image = TF.resize(image, target_size, antialias=True)
 
         # Get the size of the resized image
         resized_height, resized_width = target_size
@@ -280,7 +280,6 @@ def apply_transforms(image, params=None):
         # Apply padding to the resized image
         image = TF.pad(resized_image, (int(left_pad), int(top_pad), int(right_pad), int(bottom_pad)))
 
-
     # 应用仿射变换
     if 'affine' in params:
         angle = params['affine']['degrees']
@@ -292,37 +291,11 @@ def apply_transforms(image, params=None):
                     scale=scale, 
                     shear=shear)
 
-    # # 应用透视变换
-    # if 'perspective' in params:
-    #     startpoints, endpoints = params['perspective']['startpoints'], params['perspective']['endpoints']
-    #     image = TF.perspective(image, startpoints=startpoints, endpoints=endpoints)
-
-    # 应用水平翻转
-    # if 'flip' in params and params['flip']['horizontal']:
-    #     image = TF.hflip(image)
-
-    # 应用垂直翻转
-    # if 'flip' in params and params['flip']['vertical']:
-    #     image = TF.vflip(image)
-
-    # 应用旋转
-    # if 'rotate' in params:
-    #     image = TF.rotate(image, angle=params['rotate'])
-    
-
     return image
 
-def crop_and_resize_tensor(
-                        frame : torch.Tensor,
-                        target_size = (512, 512), 
-                        crop_rect = None, 
-                        center = None, 
-                        is_arcface=False) -> torch.Tensor:
+def crop_and_resize_tensor(frame, target_size = (512, 512), crop_rect = None, center = None):
     # 假设 frame 是 (B, C, H, W) 的格式
     b, _, height, width = frame.shape
-    
-    if is_arcface:
-        target_size = (112, 112)
 
     if crop_rect is not None:
         left, top, right, bottom = crop_rect
@@ -365,10 +338,267 @@ def crop_and_resize_tensor(
     frame_cropped = frame[:, :, int(top):int(bottom), int(left):int(right)].float()
     target_height, target_width = target_size
     frame_resized = torch.nn.functional.interpolate(frame_cropped, size=(target_height, target_width), mode='bilinear', align_corners=False)
-    return frame_resized
+    return frame_resized, (int(top), int(bottom), int(left), int(right))
+
+def crop_and_resize_tensor_with_face_rects(pixel_values, faces, target_size = (512, 512)) -> torch.Tensor:
+    L, __, H, W = pixel_values.shape
+    l, t, r, b = W, H, 0, 0
+    min_face_size = 1
+    all_face_rects = list()
+    for i in range(L):
+        face_rects = list()
+        for j, ids in enumerate(faces['image_ids']):
+            if i == ids:
+                face_rects.append(faces['rects'][j])
+        if len(face_rects) == 0:
+            if len(all_face_rects) > 0:
+                face_rects = [all_face_rects[-1]]
+            else:
+                return None, None, None, None
+        face_rect = face_rects[0]
+        left, top, right, bottom = face_rect
+        min_face_size = min(min_face_size, (right - left) * (bottom - top) / (H * W))
+        l = min(left, l)
+        t = min(top, t)
+        r = max(r, right)
+        b = max(b, bottom)
+        all_face_rects.extend(face_rects)
+    face_center = ((l + r) // 2, (t + b) // 2)
+    output_values, bbox = crop_and_resize_tensor(pixel_values, target_size=target_size, center=face_center)
+
+    return min_face_size, all_face_rects, bbox, output_values
+                
+
+def crop_and_resize_tensor_face(pixel_values : torch.Tensor,
+                        target_size = (512, 512),
+                        crop_face_center = True, face_detector = None) -> torch.Tensor:
+    # 和crop_and_resize_tensor_face 一样，但是把人脸放到中间，并且裁剪人脸大小占整个图像的0.25
+    pixel_values = pixel_values.to("cuda")
+    pixel_values_det = pixel_values.clone()
+    assert face_detector is not None
+    face_stride = len(pixel_values_det) // 32
+    if face_stride == 0:
+        face_stride += 1
+    faces = face_detector(pixel_values_det[::face_stride])
+    if 'image_ids' not in faces.keys() or faces['image_ids'].numel() == 0 or not crop_face_center:
+        pixel_values = crop_and_resize_tensor(pixel_values_det, target_size=target_size)
+        # print("no face find in first frame")
+    else:
+        L, __, H, W = pixel_values.shape
+        l, t, r, b = W, H, 0, 0
+        for i in range(L):
+            face_rects = []
+            for j, ids in enumerate(faces['image_ids']):
+                if i == ids:
+                    face_rects.append(faces['rects'][j])
+            if len(face_rects) == 0:
+                continue
+            face_rect = face_rects[0]
+            left, top, right, bottom = face_rect
+            l = min(left, l)
+            t = min(top, t)
+            r = max(r, right)
+            b = max(b, bottom)
+            center_x, center_y = (l + r) // 2, (t + b) // 2
+
+        pixel_values, bbox = crop_and_resize_tensor(pixel_values, target_size=target_size, center=(center_x, center_y))
+
+    return pixel_values.cpu()
+
+def crop_move_face(frames, crop_rects, bbox, target_size = (512, 512), top_margin=0.4, bottom_margin=0.1):
+    # 将除要裁剪的人脸以外的其他区域全部保留下来，但是涂成黑色，只有人脸区域保留
+    # is_get_head: 是否获取包含更多头部（发际线以上的部位作为Condition）
+    # 假设 frame 是 (B, C, H, W) 的格式
+    L = frames.shape[0]
+    output_sequence = list()
+    ptop, pbottom, pleft, pright = bbox
+    for i in range(L):
+        frame, crop_rect = frames[i: i + 1], crop_rects[i]
+        b, channels, height, width = frame.shape
+        
+        left, top, right, bottom = crop_rect
+        face_w = right - left
+        face_h = bottom - top
+        # padding = max(face_w, face_h) // 2
+        
+        if face_w < face_h:
+            left = left - (face_h - face_w) // 2
+            right = right + (face_h - face_w) // 2
+        else:
+            top = top - (face_w - face_h) // 2
+            bottom = bottom + (face_w - face_h) // 2
+
+        delta_hight = (bottom - top)
+        top -= top_margin * delta_hight
+        bottom += bottom_margin * delta_hight
+        left, top, right, bottom = max(left, 0), max(top, 0), min(right, width), min(bottom, height)
+
+        frame_cropped = torch.zeros_like(frame).float()
+        move_face = frame[:, :, int(top):int(bottom), int(left):int(right)].float()
+        frame_cropped[:, :, int(top):int(bottom), int(left):int(right)] = move_face
+        frame_cropped = frame_cropped[:, :, ptop: pbottom, pleft: pright]
+
+        target_height, target_width = target_size
+        frame_resized = torch.nn.functional.interpolate(frame_cropped, size=(target_height, target_width), mode='bilinear', align_corners=False)
+        output_sequence.append(frame_resized)
+    output_frames = torch.cat(output_sequence, dim=0)
+    return output_frames
 
 
-def crop_move_face(
+
+def get_rect_length(left, top, right, bottom, width, height):
+    # 获取一个，以给定矩形中心为中心的最大外部正方形
+    center_x = (left + right) // 2
+    center_y = (top + bottom) // 2
+    distance_to_edge = min(center_x, center_y, width - center_x, height - center_y)
+    return 2 * distance_to_edge, center_x, center_y
+
+def wide_crop_face(pixel_values, faces, target_size = (512, 512)) -> torch.Tensor:
+    L, __, H, W = pixel_values.shape
+    l, t, r, b = W, H, 0, 0
+    min_face_size = 1
+    all_face_rects = list()
+    for i in range(L):
+        face_rects = list()
+        for j, ids in enumerate(faces['image_ids']):
+            if i == ids:
+                face_rects.append(faces['rects'][j])
+        if len(face_rects) == 0:
+            if len(all_face_rects) > 0:
+                face_rects = [all_face_rects[-1]]
+            else:
+                return None, None, None, None
+        face_rect = face_rects[0]
+        left, top, right, bottom = face_rect
+        min_face_size = min(min_face_size, (right - left) * (bottom - top) / (H * W))
+        l = min(left, l)
+        t = min(top, t)
+        r = max(r, right)
+        b = max(b, bottom)
+        all_face_rects.extend(face_rects)
+    w, h = (r - l), (b - t)
+    x_c, y_c = (l + r) / 2, (t + b) / 2
+    expand_dis = max(w, h)
+    left, right = max(x_c - expand_dis * 0.9, 0), min(x_c + expand_dis * 0.9, W)
+    top, bottom = max(y_c - expand_dis, 0), min(y_c + expand_dis * 0.8, H)
+    # Get new center and new rect
+    x_c, y_c = (left + right) / 2, (bottom + top) / 2
+    distance_to_edge = min(x_c - left, right - x_c, y_c - top, bottom - y_c)
+    left = x_c - distance_to_edge
+    right = x_c + distance_to_edge
+    top = y_c - distance_to_edge
+    bottom = y_c + distance_to_edge
+    face_center = ((l + r) // 2, (t + b) // 2)
+    bbox = [int(top), int(bottom), int(left), int(right)]
+    print(bbox, pixel_values.shape)
+    pixel_values = pixel_values[:, :, int(top):int(bottom), int(left):int(right)].float()
+    target_height, target_width = target_size
+    output_values = torch.nn.functional.interpolate(pixel_values, size=(target_height, target_width), mode='bilinear', align_corners=False)
+    return min_face_size, all_face_rects, bbox, output_values
+
+
+def get_patch_div4(x_mean, y_mean, H, W):
+    # 以x_mean, y_mean为中心，生成一个大小为H/4,W/4的矩形
+    # 计算矩形半高和半宽
+    half_height = H / 8
+    half_width = W / 8
+
+    # 计算矩形的边界
+    xmin = max(0, x_mean - half_width)
+    xmax = min(W, x_mean + half_width)
+    ymin = max(0, y_mean - half_height)
+    ymax = min(H, y_mean + half_height)
+
+    return int(xmin), int(xmax), int(ymin), int(ymax)
+
+def get_025_gaze_mouth(control:torch.Tensor, 
+                    origin_video:torch.Tensor, 
+                    dwpose_model, 
+                    faces,
+                    target_size=(512, 512),
+                    move_face=True, is_get_head=True, is_get_gaze=True):
+    # 推理时使用。获取以眼睛和嘴巴为中心的，大小为H/4,W/4 patch的图像
+    # control: b, c, h, w
+    # origin_video: b c h w
+    # return control_condition (fix with ref-image), origin control video after crop
+    # is_get_head 是否多裁一些人脸，让头部也保留，只在move_face为True的时候有用
+    H, W = control.shape[2:]
+    control_crop = control.clone()
+    control = rearrange(control, "b c h w -> b h w c")
+    control = control.numpy() # b h w c, numpy
+    if 'image_ids' not in faces.keys() or faces['image_ids'].numel() == 0:
+        face_rect = [None] * len(control_crop)
+    else:
+        face_rect = []
+        for i in range(len(control_crop)):
+            for j, ids in enumerate(faces['image_ids']):
+                if i == ids:
+                    face_rect.append(faces['rects'][j])
+                    break
+            if len(face_rect) == i:
+                face_rect.append(None)                                                
+    face_image_list = []
+    for i, face_rect_item in enumerate(face_rect):
+        face_image = crop_move_face(control_crop[i].unsqueeze(0), 
+                                    target_size=target_size, 
+                                    crop_rect=face_rect_item, 
+                                    is_get_head=is_get_head)            
+        face_image_list.append(face_image)
+    
+    # 获取source image和control condition的landmark，并进行基于眼睛和嘴巴中心的对齐
+    control_crop = rearrange(control_crop, "b c h w -> b h w c").numpy()
+    control_crop = control_crop.astype("uint8")
+    origin_video = rearrange(origin_video, "b c h w -> b h w c")
+    origin_video = origin_video[0].numpy() # h w c, numpy
+    _, __, source_landmark = dwpose_model.dwpose_model(origin_video, output_type='np', image_resolution=H, get_mark=True)
+    source_landmark = source_landmark["faces_all"][0] * target_size[0]
+    _, __, control_landmark = dwpose_model.dwpose_model(control_crop[0], output_type='np', image_resolution=H, get_mark=True)
+    control_landmark = control_landmark["faces_all"][0] * target_size[0]
+    src_point = control_landmark
+    right, bottom = src_point[:, :].max(axis=0)
+    left, top = src_point[:, :].min(axis=0)
+    src_point = np.array([[left, top], [right, bottom], [left, bottom]]).astype("int32")
+    dist_point = source_landmark
+    right, bottom = dist_point[:, :].max(axis=0)
+    left, top = dist_point[:, :].min(axis=0)
+    dist_point = np.array([[left, top], [right, bottom], [left, bottom]]).astype("int32")
+    
+    transform_matrix = cv2.getAffineTransform(np.float32(src_point), np.float32(dist_point))
+    # 获取对齐矩阵后，再将moveFace结果进行转移
+    control_crop = torch.cat(face_image_list).cpu()
+    control_crop = rearrange(control_crop, "b c h w -> b h w c").numpy().astype('uint8')
+    # 转移完moveFace的结果后，再获取025的gaze_mouth
+    frame_gaze_list = []
+    for control_item in control_crop:
+        _, __, ldm = dwpose_model.dwpose_model(control_item, output_type='np', image_resolution=target_size[0], get_mark=True)
+        ldm = ldm["faces_all"][0] * target_size[0]
+        frame_gaze = np.zeros_like(control_item)
+        x_mean, y_mean = np.mean(ldm[60 - 24: 66 - 24], axis=0) # left eyes
+        xmin, xmax, ymin, ymax = get_patch_025(x_mean, y_mean, target_size[0], target_size[1])
+        frame_gaze[int(ymin):int(ymax), int(xmin):int(xmax), :] = control_item[int(ymin):int(ymax), int(xmin):int(xmax), :]
+        
+        x_mean, y_mean = np.mean(ldm[66 - 24: 72 - 24], axis=0) # right eyes
+        xmin, xmax, ymin, ymax = get_patch_025(x_mean, y_mean, target_size[0], target_size[1])
+        frame_gaze[int(ymin):int(ymax), int(xmin):int(xmax), :] = control_item[int(ymin):int(ymax), int(xmin):int(xmax), :]
+        x_mean, y_mean = np.mean(ldm[72 - 24: 92 - 24], axis=0) # mouth
+        xmin, xmax, ymin, ymax = get_patch_025(x_mean, y_mean, target_size[0], target_size[1])
+        frame_gaze[int(ymin):int(ymax), int(xmin):int(xmax), :] = control_item[int(ymin):int(ymax), int(xmin):int(xmax), :]
+        frame_gaze_list.append(frame_gaze)
+    frame_gaze_list = np.array(frame_gaze_list).astype('uint8')    
+    # 转移完后再使用对齐矩阵进行对齐操作
+    control_aligns = []
+    frame_gaze_aligns = []
+    for item, item_gaze_mouth in zip(control_crop, frame_gaze_list):
+        aligned_img = cv2.warpAffine(item, transform_matrix, (H, W))
+        aligned_item_gaze_mouth = cv2.warpAffine(item_gaze_mouth, transform_matrix, (H, W)) 
+        control_aligns.append(aligned_img)
+        frame_gaze_aligns.append(aligned_item_gaze_mouth)
+    control_crop = np.array(control_aligns)
+    frame_gaze_list = np.array(frame_gaze_aligns)
+    return control_crop, control, frame_gaze_list
+
+
+def crop_move_face_org(
     frame : torch.Tensor,
     target_size = (512, 512), 
     crop_rect = None, 
@@ -431,180 +661,6 @@ def crop_move_face(
 
     return frame_resized
 
-import facer
-def crop_and_resize_tensor_face(pixel_values : torch.Tensor,
-                        target_size = (512, 512),
-                        crop_face_center = True, face_detector = None) -> torch.Tensor:
-    pixel_values = pixel_values.to("cuda")
-    pixel_values_det = pixel_values.clone()
-    assert face_detector is not None
-    detect_idx = [0, -1] if pixel_values_det.shape[0] > 1 else [0]
-    faces = face_detector(pixel_values_det[detect_idx, ...])
-    if 'image_ids' not in faces.keys() or faces['image_ids'].numel() == 0 or not crop_face_center:
-        pixel_values = crop_and_resize_tensor(pixel_values_det, target_size=target_size)
-        # print("no face find in first frame")
-    else:
-        face_rect = []
-        for i in range(2):
-            for j, ids in enumerate(faces['image_ids']):
-                if i == ids:
-                    face_rect.append(faces['rects'][j])
-                    break
-            if len(face_rect) == i:
-                face_rect.append(None)
-        # we can find face in first frame and last frame
-        if face_rect[0] is not None and face_rect[1] is not None:
-            left, top, right, bottom = face_rect[0]
-            face_center = ((left + right) // 2, (top + bottom) // 2)
-            pixel_values_det = crop_and_resize_tensor(pixel_values_det, target_size=target_size, center=face_center)
-            # re check whether the last frame has face
-            faces = face_detector(pixel_values_det[-1:, ...])
-            if 'image_ids' not in faces.keys() or faces['image_ids'].numel() == 0:
-                # if the last frame not have face, we use origin pixel_values
-                pixel_values_det = rearrange(pixel_values, "b f c h w -> (b f) c h w")
-                pixel_values = crop_and_resize_tensor(pixel_values_det, target_size=target_size)
-                # print("no face find in last frame")
-            else:
-                pixel_values = pixel_values_det
-                # print("using crop face as center")
-        
-        # we can find face in first frame and there is one frame
-        elif face_rect[0] is not None and pixel_values.shape[0] == 1:
-            left, top, right, bottom = face_rect[0]
-            face_center = ((left + right) // 2, (top + bottom) // 2)
-            pixel_values = crop_and_resize_tensor(pixel_values_det, target_size=target_size, center=face_center)
-
-        # we can not find face in first frame and last frame
-        else:
-            pixel_values = crop_and_resize_tensor(pixel_values_det, target_size=target_size)
-    return pixel_values.cpu()
-
-
-def get_rect_length(left, top, right, bottom, width, height):
-    # 获取一个，以给定矩形中心为中心的最大外部正方形
-    center_x = (left + right) // 2
-    center_y = (top + bottom) // 2
-    distance_to_edge = min(center_x, center_y, width - center_x, height - center_y)
-    return 2 * distance_to_edge, center_x, center_y
-
-def crop025_face(pixel_values : torch.Tensor,
-                target_size = (512, 512),
-                crop_face_center = True, face_detector = None) -> torch.Tensor:
-    # 和crop_and_resize_tensor_face 一样，但是把人脸放到中间，并且裁剪人脸大小占整个图像的0.25
-    pixel_values = pixel_values.to("cuda")
-    pixel_values_det = pixel_values.clone()
-    assert face_detector is not None
-    faces = face_detector(pixel_values_det[...])
-    if 'image_ids' not in faces.keys() or faces['image_ids'].numel() == 0 or not crop_face_center:
-        pixel_values = crop_and_resize_tensor(pixel_values_det, target_size=target_size)
-        # print("no face find in first frame")
-    else:
-        L, __, H, W = pixel_values.shape
-        l, t, r, b = W, H, 0, 0
-        for i in range(L):
-            face_rects = []
-            for j, ids in enumerate(faces['image_ids']):
-                if i == ids:
-                    face_rects.append(faces['rects'][j])
-            
-            face_rect = face_rects[0]
-            left, top, right, bottom = face_rect
-            l = min(left, l)
-            t = min(top, t)
-            r = max(r, right)
-            b = max(b, bottom)
-
-        # l, t, r, b 作为最终的包含所有人脸的框
-        dh, dw = (b - t), (r - l)
-        rect_length, center_x, center_y = get_rect_length(l, t, r, b, W, H)
-        # padding = min(min(H - b, W - r), min(l, t))
-        l = center_x - min(rect_length // 2, dw * 0.6)
-        r = center_x + min(rect_length // 2, dw * 0.6)
-        t = center_y - min(rect_length // 2, dh * 1.)
-        b = center_y + min(rect_length // 2, dh * 0.6)
-        print([l, t, r, b])
-        # print("dh dw padding is", dh // 4, dw // 4, padding)
-        pixel_values = crop_and_resize_tensor(pixel_values, target_size=target_size, crop_rect=[l, t, r, b])
-
-    return pixel_values.cpu()
-
-def get_patch_025(x_mean, y_mean, H, W):
-    # 以x_mean, y_mean为中心，生成一个大小为H/4,W/4的矩形
-    # 计算矩形半高和半宽
-    half_height = H / 8
-    half_width = W / 8
-
-    # 计算矩形的边界
-    xmin = max(0, x_mean - half_width)
-    xmax = min(W, x_mean + half_width)
-    ymin = max(0, y_mean - half_height)
-    ymax = min(H, y_mean + half_height)
-
-    return int(xmin), int(xmax), int(ymin), int(ymax)
-
-def get_025_gaze_mouth(control:torch.Tensor, 
-                    origin_video:torch.Tensor, 
-                    dwpose_model, 
-                    face_detector, local_rank, weight_type, 
-                    switch_control_to_source = False,
-                    target_size=(512, 512),
-                    move_face=False, is_get_head=False, is_get_gaze=False):
-    # 推理时使用。获取以眼睛和嘴巴为中心的，大小为H/4,W/4 patch的图像
-    # control: b, c, h, w
-    # origin_video: b c h w
-    # return control_condition (fix with ref-image), origin control video after crop
-    # is_get_head 是否多裁一些人脸，让头部也保留，只在move_face为True的时候有用
-    H, W = control.shape[2:]
-    control_crop = control.clone()
-    control = rearrange(control, "b c h w -> b h w c")
-    control = control.numpy() # b h w c, numpy
-    faces = face_detector(control_crop.to(device=local_rank, dtype=weight_type))
-    if 'image_ids' not in faces.keys() or faces['image_ids'].numel() == 0:
-        face_rect = [None] * len(control_crop)
-    else:
-        face_rect = []
-        for i in range(len(control_crop)):
-            for j, ids in enumerate(faces['image_ids']):
-                if i == ids:
-                    face_rect.append(faces['rects'][j])
-                    break
-            if len(face_rect) == i:
-                face_rect.append(None)                                                
-    face_image_list = []
-    for i, face_rect_item in enumerate(face_rect):
-        face_image = crop_move_face(control_crop[i].unsqueeze(0), 
-                                    target_size=target_size, 
-                                    crop_rect=face_rect_item, 
-                                    is_get_head=is_get_head)            
-        face_image_list.append(face_image)
-    
-    control_crop = torch.cat(face_image_list).cpu()
-    control_crop = rearrange(control_crop, "b c h w -> b h w c").numpy()
-
-    if is_get_gaze:
-        frame_gaze_list = []
-        for control_item in control_crop:
-            _, __, ldm = dwpose_model.dwpose_model(control_item, output_type='np', image_resolution=target_size[0], get_mark=True)
-            ldm = ldm["faces_all"][0] * target_size[0]
-            frame_gaze = np.zeros_like(control_item)
-            x_mean, y_mean = np.mean(ldm[60 - 24: 66 - 24], axis=0) # left eyes
-            xmin, xmax, ymin, ymax = get_patch_025(x_mean, y_mean, target_size[0], target_size[1])
-            frame_gaze[int(ymin):int(ymax), int(xmin):int(xmax), :] = control_item[int(ymin):int(ymax), int(xmin):int(xmax), :]
-            
-            x_mean, y_mean = np.mean(ldm[66 - 24: 72 - 24], axis=0) # right eyes
-            xmin, xmax, ymin, ymax = get_patch_025(x_mean, y_mean, target_size[0], target_size[1])
-            frame_gaze[int(ymin):int(ymax), int(xmin):int(xmax), :] = control_item[int(ymin):int(ymax), int(xmin):int(xmax), :]
-
-            x_mean, y_mean = np.mean(ldm[72 - 24: 92 - 24], axis=0) # mouth
-            xmin, xmax, ymin, ymax = get_patch_025(x_mean, y_mean, target_size[0], target_size[1])
-            frame_gaze[int(ymin):int(ymax), int(xmin):int(xmax), :] = control_item[int(ymin):int(ymax), int(xmin):int(xmax), :]
-            # Image.fromarray(frame_gaze.astype('uint8')).save("infer_gaze.png")
-            # Image.fromarray(control_item.astype('uint8')).save("infer_origin.png")
-            frame_gaze_list.append(frame_gaze)
-        return control_crop, control, np.array(frame_gaze_list)
-
-    return control_crop, control
-
 def get_condition_face(control:torch.Tensor, 
                     origin_video:torch.Tensor, 
                     dwpose_model, 
@@ -619,7 +675,7 @@ def get_condition_face(control:torch.Tensor,
     H, W = control.shape[2:]
     control_crop = control.clone()
     control = rearrange(control, "b c h w -> b h w c")
-    control = control.numpy() # b h w c, numpy
+    control = control.cpu().numpy() # b h w c, numpy
     faces = face_detector(control_crop.to(device=local_rank, dtype=weight_type))
     if 'image_ids' not in faces.keys() or faces['image_ids'].numel() == 0:
         face_rect = [None] * len(control_crop)
@@ -634,7 +690,7 @@ def get_condition_face(control:torch.Tensor,
                 face_rect.append(None)                                                
     face_image_list = []
     for i, face_rect_item in enumerate(face_rect):
-        face_image = crop_move_face(control_crop[i].unsqueeze(0), 
+        face_image = crop_move_face_org(control_crop[i].unsqueeze(0), 
                                     target_size=target_size, 
                                     crop_rect=face_rect_item, 
                                     is_get_head=is_get_head)            

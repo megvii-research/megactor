@@ -822,7 +822,6 @@ class AnimationPipeline(DiffusionPipeline):
                         torch.cat([ref_concat_image_noises_latents[:, :, c] for c in context])
                         .to(device)
                     )
-
                     latent_model_input = torch.cat([latent_model_input, ref_back_latent_input], dim=1)
                 
                 pose_guide_conditions = rearrange(controlnet_cond, "(b f) c h w -> b c f h w", b=1)
@@ -978,29 +977,15 @@ class AnimationPipeline(DiffusionPipeline):
         do_classifier_free_guidance = False
 
         # Encode input prompt
-        if prompt_embeddings is None:
-            prompt = prompt if isinstance(prompt, list) else [
-                prompt] * batch_size
-            if negative_prompt is not None:
-                negative_prompt = negative_prompt if isinstance(negative_prompt, list) else [
-                    negative_prompt] * batch_size
-            text_embeddings = self._encode_prompt(
-                prompt, device, num_videos_per_prompt, do_classifier_free_guidance, negative_prompt
-            )
-            text_embeddings = torch.cat([text_embeddings] * context_batch_size)
-        else:
-            # prompt_embeddings = self.image_proj_model(
-            #     prompt_embeddings)
-            text_embeddings = torch.cat(
-                [prompt_embeddings] * context_batch_size)
-
+        # text_embeddings = torch.cat(
+        #     [prompt_embeddings] * context_batch_size)
         
-            # text_embeddings = text_embeddings.repeat(1, num_videos_per_prompt, 1)
-            # text_embeddings = text_embeddings.view(
-            #     bs_embed * num_videos_per_prompt, seq_len, -1)
-            # text_embeddings = prompt_embeddings
-            # text_embeddings = torch.cat([prompt_embeddings] * context_batch_size)
-        
+        # text_embeddings = text_embeddings.repeat(1, num_videos_per_prompt, 1)
+        # text_embeddings = text_embeddings.view(
+        #     bs_embed * num_videos_per_prompt, seq_len, -1)
+        # text_embeddings = prompt_embeddings
+        # text_embeddings = torch.cat([prompt_embeddings] * context_batch_size)
+    
 
         if froce_text_embedding_zero:
             text_embeddings = torch.zeros_like(text_embeddings)
@@ -1023,7 +1008,6 @@ class AnimationPipeline(DiffusionPipeline):
 
         # print('train controlnet_condition target unique is (0, 1), real is', controlnet_condition.unique())
         # print('train source_image target unique is (-1, 1), real is', source_image.unique())
-        
         control = self.prepare_condition(
             condition=controlnet_condition,
             device=device,
@@ -1067,9 +1051,6 @@ class AnimationPipeline(DiffusionPipeline):
         # prepare controlnet condition input
         ref_image_latents = self.vae.encode(
             source_image)['latent_dist'].mean * 0.18215
-        
-        if add_noise_image_type != "":
-            latents[:, :4, ...] = latents[:, :4, ...] * 0.9 + ref_image_latents.unsqueeze(2).repeat(1, 1, video_length, 1, 1) * 0.1 * self.scheduler.init_noise_sigma
 
         t = timestep
 

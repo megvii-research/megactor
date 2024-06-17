@@ -30,7 +30,7 @@ def animate(reference_image, motion_sequence, seed, steps, guidance_scale):
     for i in range(len(n_gpus)):
         if not n_gpus[i]:
             n_gpus[i] = True
-            command = f"CUDA_VISIBLE_DEVICES={i} python3 eval.py --config configs/infer12_catnoise_warp08_power_vasa.yaml  --source {save_path} --driver {motion_sequence} --seed {seed} --num-step {steps} --guidance-scale {guidance_scale} --output-path {animation_path}"
+            command = f"CUDA_VISIBLE_DEVICES={i} python3 eval_old.py --config configs/infer12_catnoise_warp08_power_vasa.yaml  --source {save_path} --driver {motion_sequence} --seed {seed} --num-step {steps} --guidance-scale {guidance_scale} --output-path {animation_path}"
             process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
             process.wait()
             n_gpus[i] = False
@@ -46,10 +46,11 @@ with gr.Blocks() as demo:
         </a>
         <div>
             <h1 >MegActor: Harness the Power of Raw Video for Vivid Portrait Animation</h1>
-            <h5 style="margin: 0;">If you like our project, please give us a star ✨ on Github for the latest update.</h5>
-            <div style="display: flex; justify-content: center; align-items: center; text-align: center;>
+            <h5 style="margin: 0;">If you like our project, please give us a star ✨ on Github for the latest update.
                 <a href='https://github.com/megvii-research/MegFaceAnimate'><img src='https://img.shields.io/badge/Github-Code-blue'></a>
-            </div>
+                <a href='https://arxiv.org/abs/2405.20851'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a>
+                <a href='https://megactor.github.io/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>
+            </h5>
         </div>
         </div>
         """)
@@ -75,7 +76,7 @@ with gr.Blocks() as demo:
         return frames
     
     def read_image(image, size=512):
-        img = np.Array(Image.fromarray(image).resize((size, size)))
+        img = np.array(Image.fromarray(image).resize((size, size)))
         return img
         
     # when user uploads a new video

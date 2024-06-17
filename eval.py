@@ -7,6 +7,7 @@ from tqdm import tqdm
 from pathlib import Path
 import io
 import numpy as np
+import cv2
 from PIL import Image
 from omegaconf import OmegaConf
 from collections import OrderedDict
@@ -14,7 +15,7 @@ from collections import OrderedDict
 import torch
 import torch.nn.functional as F
 
-from animate.utils.util import save_videos_grid, get_condition_face, pad_image
+from animate.utils.util import save_videos_grid, pad_image, crop_move_face, crop_and_resize_tensor_with_face_rects, crop_and_resize_tensor, wide_crop_face, get_patch_div4
 from animate.utils.util import crop_and_resize_tensor_face
 from accelerate.utils import set_seed
 from animate.utils.videoreader import VideoReader
@@ -25,209 +26,150 @@ import facer
 from controlnet_resource.dense_dwpose.densedw import DenseDWposePredictor
 
 
-def main(args):
+def eval(source_path, driver_path,
+    config=None,
+    config_path="",
+    output_path="./", 
+    random_seed=42,
+    guidance_scale=4.5,
+    weight_type=torch.float16, 
+    num_steps=25,
+    device=torch.device("cpu"), 
+    model=None,
+    # face_detector=None,
+    # dwpose_model=None,
+    image_processor=None,
+    image_encoder=None,
+    clip_image_type="",
+    concat_noise_image_type="",
+    do_classifier_free_guidance="",
+    contour_preserve_generation=False
+    ):
 
-    *_, func_args = inspect.getargvalues(inspect.currentframe())
-    func_args = dict(func_args)
-
-    config = OmegaConf.load(args.config)
-    device = torch.device(f"cuda:0")
-    weight_type = torch.float16
-
-    test_video_path = args.driver
-    source_image_path = args.source
-    output_path = args.output_path
-    seed = args.seed
-    guidance_scale = args.guidance_scale
-    num_steps = args.num_steps
-
-
-    do_classifier_free_guidance = config.get(
-        "do_classifier_free_guidance", True
-    )
-    clip_image_type = config.get(
-        "clip_image_type", "foreground"
-    )
-    concat_noise_image_type = config.get(
-        "concat_noise_image_type", ""
-    )
-    ref_image_type = config.get(
-        "ref_image_type", "origin"
-    )
-    add_noise_image_type = config.get(
-        "add_noise_image_type", ""
-    )
-    save_every_image = config.get(
-        "save_every_image", False
-    )
-    model_type = config.get(
-        "model_type", "unet"
-    )
-    switch_control_to_source = config.get(
-        "switch_control_to_source", True
-    )
-    crop_face_center = config.get(
-        "crop_face_center", True
-    )
-    control_aux_type = config.control_aux_type
-    guidance_scale = config.guidance_scale
-
-    pipeline = MagicAnimate(config=config,
-                            train_batch_size=1,
-                            device=device,
-                            unet_additional_kwargs=OmegaConf.to_container(config.unet_additional_kwargs))
-    
-    face_detector = facer.face_detector('retinaface/mobilenet', device=device)
-    face_detector.requires_grad_(False)
+    if config is None:
+        config = OmegaConf.load(config_path)
+    if model is None:
+        pipeline = MagicAnimate(config=config,
+                                train_batch_size=1,
+                                device=device,
+                                unet_additional_kwargs=OmegaConf.to_container(config.unet_additional_kwargs))
+    else:
+        pipeline = model
     pipeline.to(device, dtype=weight_type)
     pipeline.eval()
 
-    dwpose_model = DenseDWposePredictor(device, resolution=config.size)
+    face_detector = facer.face_detector('retinaface/mobilenet', device=torch.device("cpu"))
+    face_detector.requires_grad_(False)
+    dwpose_model = DenseDWposePredictor("cpu", resolution=config.size)
 
-    # -------- IP adapter encoder--------#
-    if clip_image_type != "":
-
+    if image_processor is None:
         image_processor = CLIPImageProcessor.from_pretrained(config.pretrained_model_path, subfolder="feature_extractor")
         image_encoder = CLIPVisionModelWithProjection.from_pretrained(config.pretrained_model_path, subfolder="image_encoder")
-        
         image_encoder.to(device, weight_type)
         image_encoder.requires_grad_(False)
-        # face_detector = facer.face_detector('retinaface/mobilenet', device=device)
 
-    random_seed = seed
     size = config.size
-    steps = config.S
-
-    config.random_seed = []
-    samples_per_video = []
-    samples_per_clip = []
-    # manually set random seed for reproduction
-    if random_seed != -1:
-        print(f'manual random seed is {random_seed}')
-        torch.manual_seed(random_seed)
-        set_seed(random_seed)
-    else:
-        torch.seed()
-    config.random_seed.append(torch.initial_seed())
 
     # Load control and source image
-    if test_video_path.endswith('.mp4') or test_video_path.endswith('.gif'):
-        print('Control Condition', test_video_path)
-        control = VideoReader(test_video_path).read()[::10]
-        video_length = control.shape[0]
-        print('control', control.shape)
-    else:
-        print("!!!WARNING: SKIP this case since it is not a video")
+    control_data = VideoReader(driver_path).read()[::1]
+    video_length = control_data.shape[0]
     
-    print('Reference Image', source_image_path)
-    if source_image_path.endswith(".mp4") or source_image_path.endswith(".gif"):
-        source_image = VideoReader(source_image_path).read()[0]
+    if source_path.endswith(".mp4") or source_path.endswith(".gif"):
+        source_image_data = VideoReader(source_path).read()[0]
     else:
-        source_image = Image.open(source_image_path)
-        if np.array(source_image).shape[2] == 4:
-            source_image = source_image.convert("RGB")
-
-    source_image = torch.tensor(np.array(source_image)).unsqueeze(0)
+        source_image_data = Image.open(source_path)
+        if np.array(source_image_data).shape[2] == 4:
+            source_image_data = source_image_data.convert("RGB")
+    
+    source_image_data = np.array(source_image_data)
+    source_image = torch.tensor(source_image_data).unsqueeze(0)
     source_image = rearrange(source_image, "b h w c -> b c h w") # b c h w
-    control = torch.tensor(control)
+    ref_image = source_image.clone().to(device, dtype=weight_type)
+
+    faces_ref = face_detector(ref_image.cpu())
+    if 'image_ids' not in faces_ref.keys() or faces_ref['image_ids'].numel() == 0:
+        ref_image = crop_and_resize_tensor(ref_image, target_size=size)
+    elif contour_preserve_generation:
+        _, _, ref_bbox, ref_image  =  crop_and_resize_tensor_with_face_rects(ref_image, faces_ref, target_size=size)
+    else:
+        _, _, ref_bbox, ref_image  = crop_and_resize_tensor_with_face_rects(ref_image, faces_ref, target_size=size)
+
+    control = torch.tensor(control_data).to(torch.device("cpu"), dtype=weight_type)
     control = rearrange(control, "b h w c -> b c h w") # b c h w
+    faces = face_detector(control)
+    _, all_face_rects, control_bbox, control_crop  = crop_and_resize_tensor_with_face_rects(control, faces, target_size=size)
 
-    control = crop_and_resize_tensor_face(control, size, crop_face_center=crop_face_center, face_detector=face_detector)
-    source_image = crop_and_resize_tensor_face(source_image, size, crop_face_center=crop_face_center, face_detector=face_detector)
+    cur_ref = ref_image.permute(0, 2, 3, 1)[0].cpu().numpy()
+    control_crop = control_crop.permute(0, 2, 3, 1).cpu().numpy()
+    if contour_preserve_generation:
+        _, __, dist_point = dwpose_model.dwpose_model(cur_ref, output_type='np', image_resolution=size[0], get_mark=True)
+        dist_point = dist_point["faces_all"][0] * size[0]
+        right, bottom = dist_point[:, :].max(axis=0)
+        left, top = dist_point[:, :].min(axis=0)
+        dist_point = np.array([[left, top], [right, bottom], [left, bottom]]).astype("int32")
+        control_frames = []
 
-    ref_img_condition = source_image.clone() / 255.
-    ref_img_condition = ref_img_condition.to(device, dtype=weight_type)
+        for frame_index in range(video_length):
+            cur_control = control_crop[frame_index]
+            _, __, ldm = dwpose_model.dwpose_model(cur_control, output_type='np', image_resolution=size[0], get_mark=True)
+            ldm = ldm["faces_all"][0] * size[0]
 
-    control_condition, control = get_condition_face(control, source_image, dwpose_model, 
-                                                    face_detector, device, weight_type, 
-                                                    switch_control_to_source = True, 
-                                                    target_size=size, move_face=True, 
-                                                    is_get_head=True)
+            masked_frame = np.zeros_like(cur_control)
+            for kp_index_begin, kp_index_end in [(36, 42), (42, 48), (48, 68)]:
+                x_mean, y_mean = np.mean(ldm[kp_index_begin: kp_index_end], axis=0) # left eyes
+                xmin, xmax, ymin, ymax = get_patch_div4(x_mean, y_mean, size[0], size[1])
+                masked_frame[int(ymin):int(ymax), int(xmin):int(xmax), :] = cur_control[int(ymin):int(ymax), int(xmin):int(xmax), :]
+            control_frames.append(masked_frame)
 
-    pixel_values_pose = torch.Tensor(np.array(control_condition))
+            if frame_index == 0:
+                right, bottom = ldm[:, :].max(axis=0)
+                left, top = ldm[:, :].min(axis=0)
+                src_point = np.array([[left, top], [right, bottom], [left, bottom]]).astype("int32")
+        transform_matrix = cv2.getAffineTransform(np.float32(src_point), np.float32(dist_point))
+        control_frames = [torch.Tensor(cv2.warpAffine(item, transform_matrix, size)) for item in control_frames]
+        pixel_values_pose = torch.stack(control_frames, dim=0).to(device, dtype=weight_type).permute(0, 3, 1, 2)
+        
+    else:        
+        control = control.to(device, dtype=weight_type)
+        pixel_values_pose = crop_move_face(control, all_face_rects, control_bbox, target_size=size)
 
-    color_BW_weights = torch.tensor([0.2989, 0.5870, 0.1140]).view(1, 1, 1, 3)
-    pixel_values_pose = torch.sum(pixel_values_pose * color_BW_weights, dim=3, keepdim=True).repeat(1, 1, 1, 3)
+    color_BW_weights = torch.tensor([0.2989, 0.5870, 0.1140]).view(1, 3, 1, 1).to(device, dtype=weight_type)
+    pixel_values_pose = torch.sum(pixel_values_pose * color_BW_weights, dim=1, keepdim=True).repeat(1, 3, 1, 1)
     pixel_values_pose = pixel_values_pose.clamp(0, 255.)
 
     pixel_values_pose = rearrange(
-        pixel_values_pose, "(b f) h w c -> b f h w c", b=1)
-    pixel_values_pose = pixel_values_pose.to(device, dtype=weight_type)
-    pixel_values_pose = pixel_values_pose / 255.
+        pixel_values_pose, "(b f) c h w -> b f c h w", b=1)
 
-    
     with torch.inference_mode():
-        source_image_pil = Image.fromarray(source_image[0].permute(1, 2, 0).numpy().astype("uint8"))
-        dwpose_model_result_dict = dwpose_model(source_image_pil)
-        # Image.fromarray(ref_image_control).save('ref_image_control.png')
-        ref_img_foreground = dwpose_model_result_dict['foreground']
-        ref_img_convert = dwpose_model_result_dict[ref_image_type]
-        if concat_noise_image_type != "":
+        ref_concat_image_noises = []
+        ref_img_background_masks = []
+        ref_img_clips = []
+        image_np = rearrange(ref_image, "b c h w -> b h w c")
+        image_np = image_np.cpu().numpy().astype(np.uint8)
+        for i, ref_img in enumerate(image_np):
+            ref_img = Image.fromarray(ref_img)
+            dwpose_model_result_dict = dwpose_model(ref_img)
+
             ref_concat_image_noise = dwpose_model_result_dict[concat_noise_image_type]
+            ref_concat_image_noises.append(torch.tensor(ref_concat_image_noise).permute(2, 0, 1))
+
             ref_img_background_mask = dwpose_model_result_dict['background_mask']
-        if add_noise_image_type != "":
-            ref_add_image_noise = dwpose_model_result_dict[add_noise_image_type]
-        if clip_image_type != "":
-            ref_img_clip = dwpose_model_result_dict[clip_image_type]  
-            ref_img_clip = Image.fromarray(ref_img_clip)
+            ref_img_background_masks.append(torch.tensor(ref_img_background_mask).squeeze())                                
 
-    source_image = np.array(source_image_pil)
-    if ref_image_type != "origin":
-        source_image = ref_img_convert
-    source_image = ((torch.Tensor(source_image).unsqueeze(
-        0).to(device, dtype=weight_type) / 255.0) - 0.5) * 2
+            ref_img_clip = dwpose_model_result_dict[clip_image_type]
+            ref_img_clips.append(torch.tensor(ref_img_clip).permute(2, 0, 1))
+        concat_poses = torch.stack(ref_concat_image_noises, dim=0)[None, ...]
+        concat_background = torch.stack(ref_img_background_masks, dim=0)[None, ...]
+        clip_conditions = torch.stack(ref_img_clips, dim=0)[None, ...]
 
-    B, H, W, C = source_image.shape
-
-    # concat noise with background latents
-    ref_concat_image_noises_latents = None
-    if concat_noise_image_type != "":
-        ref_concat_image_noises = torch.Tensor(np.array(ref_concat_image_noise)).unsqueeze(0).to(device, dtype=weight_type)
-        one_img_have_more = False
-        if len(ref_concat_image_noises.shape) == 5:
-            ref_concat_image_noises = rearrange(ref_concat_image_noises, 'b f h w c -> (b f) h w c')
-            one_img_have_more = True
-        ref_concat_image_noises = rearrange(ref_concat_image_noises, 'b h w c -> b c h w')
-        ref_concat_image_noises = ref_concat_image_noises / 127.5 - 1
-        ref_concat_image_noises_latents = pipeline.vae.encode(ref_concat_image_noises).latent_dist
-        ref_concat_image_noises_latents = ref_concat_image_noises_latents.sample().unsqueeze(2)
-        ref_concat_image_noises_latents = ref_concat_image_noises_latents * 0.18215
-        
-        if one_img_have_more == True:
-            B, C, _, H, W = ref_concat_image_noises_latents.shape
-            ref_concat_image_noises_latents = ref_concat_image_noises_latents.reshape(B//2, C*2, _, H, W)
-
-        ref_img_back_mask_latents = torch.tensor(np.array(ref_img_background_mask)[None, ...].transpose(0, 3, 1, 2)).to(device, dtype=weight_type)
-        H, W = ref_concat_image_noises_latents.shape[3:]
-        ref_img_back_mask_latents = F.interpolate(ref_img_back_mask_latents, size=(H, W), mode='nearest').unsqueeze(2)
-        ref_concat_image_noises_latents = torch.cat([
-            ref_concat_image_noises_latents, ref_img_back_mask_latents
-        ], dim=1).repeat(1, 1, video_length, 1, 1)
-
-        if guidance_scale > 1.0 and do_classifier_free_guidance:
-            ref_concat_image_noises_latents = torch.cat([ref_concat_image_noises_latents,
-                ref_concat_image_noises_latents])
-
-    ######################### image encoder#########################
-    image_prompt_embeddings = None
-    if clip_image_type != "":
-        with torch.inference_mode():
-            clip_image = image_processor(
-                images=ref_img_clip, return_tensors="pt").pixel_values
-            image_emb = image_encoder(clip_image.to(
-                device, dtype=weight_type), output_hidden_states=True).last_hidden_state
-            image_emb = image_encoder.vision_model.post_layernorm(image_emb)
-            image_emb = image_encoder.visual_projection(image_emb)# image_emb = image_encoder.vision_model.post_layernorm(image_emb)
-
-            image_prompt_embeddings = image_emb
-            if guidance_scale > 1.0 and do_classifier_free_guidance:
-                image_prompt_embeddings = torch.cat([image_emb, image_emb])
-
+    pixel_values_ref_img, image_prompt_embeddings, pixel_values_pose, ref_concat_image_noises_latents, ref_img_condition = pipeline.preprocess_eval(
+        ref_image, pixel_values_pose, concat_poses, concat_background, clip_conditions, image_processor, image_encoder,
+        guidance_scale=guidance_scale, do_classifier_free_guidance=do_classifier_free_guidance)
     context=config.context
+
     with torch.inference_mode():
-        source_image = rearrange(source_image, 'b h w c -> b c h w')
         samples_per_video = pipeline.infer(
-            source_image=source_image,
+            source_image=pixel_values_ref_img,
             image_prompts=image_prompt_embeddings,
             motion_sequence=pixel_values_pose,
             step=num_steps,
@@ -238,18 +180,23 @@ def main(args):
             froce_text_embedding_zero=config.get('froce_text_embedding_zero', False),
             ref_concat_image_noises_latents=ref_concat_image_noises_latents,
             do_classifier_free_guidance=do_classifier_free_guidance,
-            add_noise_image_type=add_noise_image_type,
+            add_noise_image_type="",
             ref_img_condition=ref_img_condition,
             visualization=False
         )
-
+    if isinstance(samples_per_video, list):
+        samples_per_video = torch.cat(samples_per_video)
+    video_name = os.path.basename(driver_path)[:-4]
+    source_name = os.path.basename(
+        source_path).split(".")[0]
     if output_path != '':
-        save_videos_grid(
-            samples_per_video[:, :, 1:, ...], output_path, save_every_image=False, fps=25)
+        if os.path.exists(output_path):
+            save_videos_grid(
+                samples_per_video[:, :, 1:, ...], f"{output_path}/{source_name}_{video_name}.mp4", save_every_image=False, fps=25)
+        else:
+            save_videos_grid(
+                samples_per_video[:, :, 1:, ...], f"{output_path}", save_every_image=False, fps=25)
     else:
-        video_name = os.path.basename(test_video_path)[:-4]
-        source_name = os.path.basename(
-            source_image_path).split(".")[0]
         save_videos_grid(
             samples_per_video[:, :, 1:, ...], f"./{source_name}_{video_name}.mp4", save_every_image=False, fps=25)
 
@@ -261,8 +208,27 @@ if __name__ == "__main__":
     parser.add_argument("--driver", type=str, required=True, help='Specify the driving video path.')
     parser.add_argument("--output-path", type=str, default='', help='Specify the result video path.')
     parser.add_argument("--seed", type=int, default=42, help='Specify random seed.')
-    parser.add_argument("--guidance-scale", type=float, default=4.5, help='Specify classifier-free guidance scale.')
     parser.add_argument("--num-steps", type=int, default=25, help='Specify steps of denoising, more steps take more time to yield better result.')
+    parser.add_argument("--guidance-scale", type=float, default=4.5, help='Specify classifier-free guidance scale.')
+    parser.add_argument("--contour-reserve", action='store_true', help='Specify whether to mask the face other  than eyes and mouth to better align face shape.')
 
     args = parser.parse_args()
-    main(args)
+    eval(args.source, args.driver, 
+        config=None,
+        config_path=args.config,
+        output_path=args.output_path, 
+        random_seed=args.seed,
+        guidance_scale=args.guidance_scale,
+        weight_type=torch.float16, 
+        num_steps=args.num_steps,
+        device=torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu"), 
+        model=None,
+        # face_detector=None,
+        # dwpose_model=None,
+        image_processor=None,
+        image_encoder=None,
+        clip_image_type="background",
+        concat_noise_image_type="origin",
+        do_classifier_free_guidance=True,
+        contour_preserve_generation=args.contour_reserve
+        )

@@ -27,6 +27,7 @@ from animate.utils.videoreader import VideoReader
 from animate.utils.util import get_checkpoint
 from einops import rearrange, repeat
 import io
+import torch.nn.functional as F
 
 from .resnet import InflatedConv3d
 from .resampler import Resampler, MLPProjModel
@@ -44,6 +45,8 @@ class MagicAnimate(torch.nn.Module):
                  mixed_precision_training=False,
                  trainable_modules=[],
                  is_main_process=True,
+                 weight_type=torch.float16,
+                 image_finetune=True
                  ):
         super().__init__()
 
@@ -74,8 +77,9 @@ class MagicAnimate(torch.nn.Module):
 
         inference_config = OmegaConf.load(config['inference_config'])
         self.device = device
+        self.weight_type = weight_type
         self.train_batch_size = train_batch_size
-
+        self.image_finetune = image_finetune
         
         motion_module = config['motion_module']
 
@@ -393,7 +397,7 @@ class MagicAnimate(torch.nn.Module):
             appearance_encoder=self.appearance_encoder,
             source_image=source_image,
             context_frames = control.shape[1],
-            context_batch_size = 1,
+            context_batch_size = control.shape[0],
             guidance_scale = guidance_scale,
             froce_text_embedding_zero = froce_text_embedding_zero,
             add_noise_image_type = add_noise_image_type,
@@ -403,3 +407,116 @@ class MagicAnimate(torch.nn.Module):
 
     def clear_reference_control(self):
         self.pipeline.clear_reference_control()
+
+    def preprocess_train(self, batch, image_processor, image_encoder):
+            pixel_values = batch["video"].to(self.device, dtype=self.weight_type)
+            ref_img_conditions = batch["reference"].clone() / 255.
+            ref_img_conditions = ref_img_conditions.to(self.device, dtype=self.weight_type)
+            pixel_values_ref_img = batch["reference"].byte().to(self.device, dtype=self.weight_type)
+            pixel_values_ref_img = pixel_values_ref_img / 127.5 - 1.
+
+            pixel_values_pose = batch['swapped'].to(self.device, dtype=self.weight_type) # b c h w
+            pixel_values_pose = rearrange(pixel_values_pose  / 255., "b f c h w -> b f h w c", b=self.train_batch_size) 
+            concat_poses = batch['concat_poses'].to(self.device, dtype=self.weight_type)
+            concat_background = batch['concat_background'].to(self.device, dtype=self.weight_type)
+            clip_conditions = batch['clip_conditions'].to(self.device, dtype=self.weight_type)
+
+            clip_images = image_processor(
+                images=rearrange(clip_conditions, "b f c h w -> (b f) c h w"), return_tensors="pt").pixel_values.to(self.device, dtype=self.weight_type)
+            image_emb = image_encoder(clip_images, output_hidden_states=True).last_hidden_state
+            image_emb = image_encoder.vision_model.post_layernorm(image_emb)
+            image_emb = image_encoder.visual_projection(image_emb)
+
+            pixel_values = pixel_values / 127.5 - 1
+            pixel_values = rearrange(pixel_values, "b f c h w -> (b f) c h w")
+            with torch.no_grad():
+                latents = self.vae.encode(pixel_values).latent_dist
+                latents = latents.sample()
+                latents = rearrange(latents, "(b f) c h w -> b c f h w", b=self.train_batch_size)
+                latents = latents * 0.18215
+
+                ref_concat_image_noises = concat_poses
+                # Image.fromarray(ref_concat_image_noises[0].astype('uint8')).save('ref_concat_image_noise.png')
+                one_img_have_more = False
+                if len(ref_concat_image_noises.shape) == 5:
+                    ref_concat_image_noises = rearrange(ref_concat_image_noises, 'b f c h w -> (b f) c h w')
+                    one_img_have_more = True
+                ref_concat_image_noises = ref_concat_image_noises / 127.5 - 1
+                # print('ref_img_backgrounds unique is', ref_img_backgrounds.unique())
+                ref_concat_image_noises_latents = self.vae.encode(ref_concat_image_noises).latent_dist
+                ref_concat_image_noises_latents = ref_concat_image_noises_latents.sample().unsqueeze(2)
+                ref_concat_image_noises_latents = ref_concat_image_noises_latents * 0.18215
+                # b c 1 h w b c f h w
+
+                ref_img_back_mask_latents = concat_background
+                H, W = ref_concat_image_noises_latents.shape[3:]
+                ref_img_back_mask_latents = F.interpolate(ref_img_back_mask_latents, size=(H, W), mode='nearest').unsqueeze(2)
+
+            # Sample noise that we'll add to the latents
+            noise = torch.randn_like(latents) + 0.1 * torch.randn(latents.shape[0], latents.shape[1], 1, 1, 1).to(device=latents.device, dtype=latents.dtype)
+            bsz = latents.shape[0]
+
+            # Sample a random timestep for each video
+            timesteps = torch.randint(0, self.scheduler.config.num_train_timesteps, (bsz,), device=latents.device)
+            timesteps = timesteps.long()
+
+            # Add noise to the latents according to the noise magnitude at each timestep
+            # (this is the forward diffusion process)
+            noisy_latents = self.scheduler.add_noise(latents, noise, timesteps)
+
+            ref_concat_image_noises_latents = ref_concat_image_noises_latents.repeat(1, 1, noisy_latents.shape[2], 1, 1)
+            ref_img_back_mask_latents = ref_img_back_mask_latents.repeat(1, 1, noisy_latents.shape[2], 1, 1)
+            noisy_latents = torch.cat([noisy_latents, ref_concat_image_noises_latents, ref_img_back_mask_latents], dim=1)
+            
+            return noisy_latents, image_emb, timesteps, pixel_values_ref_img, pixel_values_pose, ref_img_conditions, noise
+
+    def preprocess_eval(self, pixel_values_ref_img, pixel_values_pose, concat_poses, concat_background, clip_conditions, image_processor, image_encoder, guidance_scale=1.0, do_classifier_free_guidance=True):
+            ref_img_conditions = pixel_values_ref_img.clone() / 255.
+            ref_img_conditions = ref_img_conditions.to(self.device, dtype=self.weight_type)
+            pixel_values_ref_img = pixel_values_ref_img.byte().to(self.device, dtype=self.weight_type)
+            pixel_values_ref_img = (pixel_values_ref_img / 255 - 0.5) * 2
+
+            video_length = pixel_values_pose.shape[1]
+            pixel_values_pose = pixel_values_pose.to(self.device, dtype=self.weight_type) # b c h w
+            pixel_values_pose = rearrange(pixel_values_pose  / 255., "b f c h w -> b f h w c", b=self.train_batch_size) 
+            concat_poses = concat_poses.to(self.device, dtype=self.weight_type)
+            concat_background = concat_background.to(self.device, dtype=self.weight_type)
+            clip_conditions = clip_conditions.to(self.device, dtype=self.weight_type)
+
+            clip_images = image_processor(
+                images=rearrange(clip_conditions, "b f c h w -> (b f) c h w"), return_tensors="pt").pixel_values.to(self.device, dtype=self.weight_type)
+            image_emb = image_encoder(clip_images, output_hidden_states=True).last_hidden_state
+            image_emb = image_encoder.vision_model.post_layernorm(image_emb)
+            image_emb = image_encoder.visual_projection(image_emb)
+            if guidance_scale > 1.0 and do_classifier_free_guidance:
+                image_emb = torch.cat([image_emb, image_emb])
+
+            with torch.no_grad():
+                ref_concat_image_noises = concat_poses
+                # Image.fromarray(ref_concat_image_noises[0].astype('uint8')).save('ref_concat_image_noise.png')
+                one_img_have_more = False
+                if len(ref_concat_image_noises.shape) == 5:
+                    ref_concat_image_noises = rearrange(ref_concat_image_noises, 'b f c h w -> (b f) c h w')
+                    one_img_have_more = True
+                ref_concat_image_noises = ref_concat_image_noises / 127.5 - 1
+                # print('ref_img_backgrounds unique is', ref_img_backgrounds.unique())
+                ref_concat_image_noises_latents = self.vae.encode(ref_concat_image_noises).latent_dist
+                ref_concat_image_noises_latents = ref_concat_image_noises_latents.sample().unsqueeze(2)
+                ref_concat_image_noises_latents = ref_concat_image_noises_latents * 0.18215
+                # b c 1 h w b c f h w
+
+                ref_img_back_mask_latents = concat_background
+                # print(concat_background.shape, concat_poses.shape, clip_conditions.shape)
+                H, W = ref_concat_image_noises_latents.shape[3:]
+                ref_img_back_mask_latents = F.interpolate(ref_img_back_mask_latents, size=(H, W), mode='nearest').unsqueeze(2)
+
+            # Add noise to the latents according to the noise magnitude at each timestep
+            # (this is the forward diffusion process)
+
+            ref_concat_image_noises_latents = ref_concat_image_noises_latents.repeat(1, 1, video_length, 1, 1)
+            ref_img_back_mask_latents = ref_img_back_mask_latents.repeat(1, 1, video_length, 1, 1)
+            ref_concat_image_noises_latents = torch.cat([ref_concat_image_noises_latents, ref_img_back_mask_latents], dim=1)
+            if guidance_scale > 1.0 and do_classifier_free_guidance:
+                ref_concat_image_noises_latents = torch.cat([ref_concat_image_noises_latents,
+                    ref_concat_image_noises_latents])
+            return pixel_values_ref_img, image_emb, pixel_values_pose, ref_concat_image_noises_latents, ref_img_conditions

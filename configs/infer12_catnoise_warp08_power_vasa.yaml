@@ -14,7 +14,9 @@ pretrained_unet_path: ""
 
 motion_module: ""
 
-appearance_controlnet_motion_checkpoint_path: "./weights/checkpoint-steps9000.ckpt"
+# appearance_controlnet_motion_checkpoint_path: "./weights/checkpoint-steps9000.ckpt"
+appearance_controlnet_motion_checkpoint_path: "/data/checkpoint-steps9000.ckpt"
+# appearance_controlnet_motion_checkpoint_path: "/home/wujuhao/code/train_logs/train1_catnoise_warp08_Ada-2024-06-13T13-10-44/checkpoints/checkpoint-steps4000.ckpt"
 # 如果指定motion_module，appearance_controlnet_motion_checkpoint_path中的motion会被覆盖
 
 # set appearance time step, if not set , it will be None
@@ -48,125 +50,16 @@ steps:          25
 guidance_scale: 4.5
 
 context:
-  context_frames: 8
+  context_frames: 4
   context_stride: 1
-  context_overlap: 4
-
-# good_cases:
-#   - '2_Easy_3.mp4.mp4'
-#   - '2_Easy_8.mp4.mp4'
-#   - '2_Easy_9.mp4.mp4'
-#   - '2_Medium_EYE_1.mp4.mp4'
-#   - '2_Medium_EYE_2.mp4.mp4'
-#   - '2_Medium_EYE_3.mp4.mp4'
-#   - '3_Easy_1.mp4.mp4'
-#   - '3_Easy_2.mp4.mp4'
-#   - '3_Easy_6.mp4.mp4'
-#   - '3_Easy_8.mp4.mp4'
-#   - '3_Medium_EYE_10.mp4.mp4'
-#   - '3_Medium_EYE_2.mp4.mp4'
-#   - 'AI_girl1_Easy_8.mp4.mp4'
-#   - 'AI_girl1_Easy_9.mp4.mp4'
-#   - 'AI_girl1_Medium_EYE_2.mp4.mp4'
-#   - 'AI_girl1_Medium_EYE_3.mp4.mp4'
-#   - 'AI_girl2_Medium_EYE_2.mp4.mp4'
-#   - 'AI_girl3_Easy_10.mp4.mp4'
-#   - 'AI_girl3_Easy_1.mp4.mp4'
-#   - 'AI_girl3_Easy_2.mp4.mp4'
-#   - 'AI_girl3_Easy_6.mp4.mp4'
-#   - 'AI_girl3_Easy_8.mp4.mp4'
-#   - 'AI_girl3_Easy_9.mp4.mp4'
-#   - 'AI_girl3_Medium_EYE_10.mp4.mp4'
-#   - 'AI_girl3_Medium_EYE_1.mp4.mp4'
-#   - 'AI_girl3_Medium_EYE_2.mp4.mp4'
-#   - 'AI_girl3_Medium_EYE_3.mp4.mp4'
-#   - 'joker_Medium_EYE_10.mp4.mp4'
-#   - 'joker_Medium_EYE_1.mp4.mp4'
-#   - 'joker_Medium_EYE_2.mp4.mp4'
-#   - 'Miley_Cyrus_Flowers_Medium_EYE_1.mp4.mp4'
-#   - 'Miley_Cyrus_Flowers_Medium_EYE_2.mp4.mp4'
-
+  context_overlap: 2
 
 source_image:
-  - '/data/VideoBMK/reference/EMO/AI_girl1.png'
-  # - '/data/VideoBMK/reference/EMO/AI_girl2.png'
-  - '/data/VideoBMK/reference/EMO/AI_girl3.png'
-  # - '/data/VideoBMK/reference/EMO/CXK.png'
-  # - '/data/VideoBMK/reference/EMO/David_Tao.PNG'
-  # - '/data/VideoBMK/reference/EMO/Dua_Lipa.PNG'
-  # - '/data/VideoBMK/reference/EMO/heben.PNG'
-  - '/data/VideoBMK/reference/EMO/joker.png'
-  # - '/data/VideoBMK/reference/EMO/juren.PNG'
-  # - '/data/VideoBMK/reference/EMO/Leonardo.png'
-  - '/data/VideoBMK/reference/EMO/Miley_Cyrus_Flowers.PNG'
-  # - '/data/VideoBMK/reference/EMO/monalisa.PNG'
-  # - '/data/VideoBMK/reference/EMO/ZGR.png'
-  # - '/data/VideoBMK/reference/x-portrait/1.png'
-  - '/data/VideoBMK/reference/x-portrait/2.png'
-  - '/data/VideoBMK/reference/x-portrait/3.png'
-  # - '/data/VideoBMK/reference/x-portrait/4.png'
-  # - '/data/VideoBMK/reference/x-portrait/5.png'
-  # - '/data/VideoBMK/reference/x-portrait/6.png'
-  # - '/data/VideoBMK/reference/x-portrait/7.png'
-  # - '/data/VideoBMK/reference/x-portrait/8.png'
-  # - '/data/VideoBMK/reference/x-portrait/9.png'
-
-
+  - "/home/wujuhao/code/back/lhd.jpg"
 
 video_path:
-  # - '/data/VideoBMK/Easy/10.mp4'
-  # - '/data/VideoBMK/Easy/1.mp4'
-  # - '/data/VideoBMK/Easy/2.mp4'
-  # - '/data/VideoBMK/Easy/3.mp4'
-  # - '/data/VideoBMK/Easy/4.mp4'
-  # - '/data/VideoBMK/Easy/5.mp4'
-  - '/data/VideoBMK/Easy/6.mp4'
-  - '/data/VideoBMK/Easy/7.mp4'
-  - '/data/VideoBMK/Easy/8.mp4'
-  - '/data/VideoBMK/Easy/9.mp4'
-  - '/data/VideoBMK/Medium_EYE/10.mp4'
-  - '/data/VideoBMK/Medium_EYE/1.mp4'
-  - '/data/VideoBMK/Medium_EYE/2.mp4'
-  - '/data/VideoBMK/Medium_EYE/3.mp4'
-  - '/data/VideoBMK/Medium_EYE/4.mp4'
-  - '/data/VideoBMK/Medium_EYE/5.mp4'
-  - '/data/VideoBMK/Medium_EYE/6.mp4'
-  - '/data/VideoBMK/Medium_EYE/7.mp4'
-  - '/data/VideoBMK/Medium_EYE/8.mp4'
-  - '/data/VideoBMK/Medium_EYE/9.mp4'
-  - '/data/VideoBMK/Medium_Head/10.mp4'
-  - '/data/VideoBMK/Medium_Head/1.mp4'
-  - '/data/VideoBMK/Medium_Head/2.mp4'
-  - '/data/VideoBMK/Medium_Head/3.mp4'
-  - '/data/VideoBMK/Medium_Head/4.mp4'
-  - '/data/VideoBMK/Medium_Head/5.mp4'
-  - '/data/VideoBMK/Medium_Head/6.mp4'
-  - '/data/VideoBMK/Medium_Head/7.mp4'
-  - '/data/VideoBMK/Medium_Head/8.mp4'
-  - '/data/VideoBMK/Medium_Head/9.mp4'
-  - '/data/VideoBMK/Medium_Rapid/1.mp4'
-  - '/data/VideoBMK/Medium_Rapid/2.mp4'
-  - '/data/VideoBMK/Medium_Rapid/3.mp4'
-  - '/data/VideoBMK/EMO_RAP/song_cxk_clean.mp4'
-  - '/data/VideoBMK/EMO_RAP/song_god_clean.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_2_fe_1.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_2_fe_2.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_2_fe_3.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_3_head_fe_1.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_3_head_fe_2.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_3_head_fe_3.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_4_head_fe_1.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_4_head_fe_2.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_4_head_fe_3.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_5_head_fe_1.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_5_head_fe_2.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_5_head_fe_3.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_8_head_fe_1.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_8_head_fe_2.mp4'
-  - '/data/VideoBMK/X-portrait/tt_extreme_8_head_fe_3.mp4'
+  - "/home/wujuhao/code/back/driver.mp4"
 
-
-  
 inference_config: "configs/inference/magic_inference.yaml"
 size: [512, 512]
 # 长度一致
