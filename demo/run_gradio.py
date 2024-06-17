@@ -86,8 +86,8 @@ with gr.Blocks() as demo:
         
         with gr.Column():
             # random_seed         = gr.Number(label="Random seed", value=42, info="default: 42")
-            sampling_steps      = gr.Textbox(label="Sampling steps", value=25, info="default: 25")
-            guidance_scale      = gr.Textbox(label="Guidance scale", value=4.5, info="default: 4.5")
+            sampling_steps      = gr.Number(label="Sampling steps", value=25, info="default: 25",  precision=0)
+            guidance_scale      = gr.Number(label="Guidance scale", value=4.5, info="default: 4.5")
             sample_l      = gr.Number(label="Sample from n-th frame of the video", value=0,  precision=0)
             sample_r     = gr.Number(label="Sample to n-th frame of the video", value=-1, precision=0)
             sample_s     = gr.Number(label="Frame sampling step", value=1, precision=0)
