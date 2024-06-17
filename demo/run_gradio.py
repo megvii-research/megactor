@@ -14,7 +14,10 @@ import gradio as gr
 from PIL import Image
 from subprocess import PIPE, run, Popen
 import subprocess
+import sys
 import torch
+sys.path.append('./')
+from eval import eval
 
 n_gpus = [False, ] * torch.cuda.device_count() 
 
@@ -22,7 +25,10 @@ os.makedirs("./demo/tmp", exist_ok=True)
 savedir = f"demo/outputs"
 os.makedirs(savedir, exist_ok=True)
 
-def animate(reference_image, motion_sequence, seed, steps, guidance_scale):
+model, image_processor, image_encoder = None, None, None
+
+def animate(reference_image, motion_sequence, steps, guidance_scale, sample_l, sample_r, sample_s):
+    global model, image_processor, image_encoder
     time_str = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
     animation_path = f"{savedir}/{time_str}.mp4"
     save_path = f"./demo/tmp/{time_str}.png"
@@ -30,9 +36,26 @@ def animate(reference_image, motion_sequence, seed, steps, guidance_scale):
     for i in range(len(n_gpus)):
         if not n_gpus[i]:
             n_gpus[i] = True
-            command = f"CUDA_VISIBLE_DEVICES={i} python3 eval_old.py --config configs/infer12_catnoise_warp08_power_vasa.yaml  --source {save_path} --driver {motion_sequence} --seed {seed} --num-step {steps} --guidance-scale {guidance_scale} --output-path {animation_path}"
-            process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-            process.wait()
+            model, image_processor, image_encoder = eval(save_path, motion_sequence, 
+                config=None,
+                config_path="configs/infer12_catnoise_warp08_power_vasa.yaml",
+                output_path=animation_path, 
+                random_seed=42,
+                guidance_scale=guidance_scale,
+                weight_type=torch.float16, 
+                num_steps=steps,
+                device=torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu"), 
+                model=model,
+                # face_detector=None,
+                # dwpose_model=None,
+                image_processor=image_processor,
+                image_encoder=image_encoder,
+                clip_image_type="background",
+                concat_noise_image_type="origin",
+                do_classifier_free_guidance=True,
+                contour_preserve_generation=True,
+                frame_sample_config=[sample_l, sample_r, sample_s]
+                )
             n_gpus[i] = False
             break
     return animation_path
@@ -53,6 +76,7 @@ with gr.Blocks() as demo:
             </h5>
         </div>
         </div>
+        <h4>Due to lackage of GPUs, driver video longer than 50 frames will be rounded. You may config sampling settings to your liking, we apologize for the inconvenience.</h4>
         """)
     animation = gr.Video(format="mp4", label="Animation Results", autoplay=True, height=512)
     
@@ -61,9 +85,12 @@ with gr.Blocks() as demo:
         motion_sequence  = gr.Video(format="mp4", label="Driver video")
         
         with gr.Column():
-            random_seed         = gr.Textbox(label="Random seed", value=42, info="default: 42")
+            # random_seed         = gr.Number(label="Random seed", value=42, info="default: 42")
             sampling_steps      = gr.Textbox(label="Sampling steps", value=25, info="default: 25")
             guidance_scale      = gr.Textbox(label="Guidance scale", value=4.5, info="default: 4.5")
+            sample_l      = gr.Number(label="Sample from n-th frame of the video", value=0,  precision=0)
+            sample_r     = gr.Number(label="Sample to n-th frame of the video", value=-1, precision=0)
+            sample_s     = gr.Number(label="Frame sampling step", value=1, precision=0)
             submit              = gr.Button("Animate")
 
     def read_video(video, size=512):
@@ -94,7 +121,7 @@ with gr.Blocks() as demo:
     # when the `submit` button is clicked
     submit.click(
         animate,
-        [reference_image, motion_sequence, random_seed, sampling_steps, guidance_scale], 
+        [reference_image, motion_sequence, sampling_steps, guidance_scale, sample_l, sample_r, sample_s], 
         animation
     )
 

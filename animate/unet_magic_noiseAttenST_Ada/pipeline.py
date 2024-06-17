@@ -685,13 +685,13 @@ class AnimationPipeline(DiffusionPipeline):
             reference_control_writer = ReferenceAttentionControl(appearance_encoder,
                                                                 do_classifier_free_guidance=do_classifier_free_guidance,
                                                                 mode='write',
-                                                                batch_size=1,
+                                                                batch_size=context_batch_size,
                                                                 clip_length=16,
                                                                 )
             reference_control_reader = ReferenceAttentionControl(self.unet,
                                                                 do_classifier_free_guidance=do_classifier_free_guidance,
                                                                 mode='read',
-                                                                batch_size=1,
+                                                                batch_size=context_batch_size,
                                                                 clip_length=16,
                                                                 )
 
@@ -824,7 +824,7 @@ class AnimationPipeline(DiffusionPipeline):
                     )
                     latent_model_input = torch.cat([latent_model_input, ref_back_latent_input], dim=1)
                 
-                pose_guide_conditions = rearrange(controlnet_cond, "(b f) c h w -> b c f h w", b=1)
+                pose_guide_conditions = rearrange(controlnet_cond, "(b f) c h w -> b c f h w", b=context_batch_size)
                 if do_classifier_free_guidance:
                     pose_guide_conditions = torch.cat([pose_guide_conditions, pose_guide_conditions])
 
@@ -977,8 +977,8 @@ class AnimationPipeline(DiffusionPipeline):
         do_classifier_free_guidance = False
 
         # Encode input prompt
-        # text_embeddings = torch.cat(
-        #     [prompt_embeddings] * context_batch_size)
+        text_embeddings = torch.cat(
+            [prompt_embeddings] * 1)
         
         # text_embeddings = text_embeddings.repeat(1, num_videos_per_prompt, 1)
         # text_embeddings = text_embeddings.view(
@@ -1039,7 +1039,7 @@ class AnimationPipeline(DiffusionPipeline):
         del init_latents
         latents_dtype = latents.dtype
 
-        pose_guide_conditions = rearrange(control, "(b f) c h w -> b c f h w", b=1)
+        pose_guide_conditions = rearrange(control, "(b f) c h w -> b c f h w", b=context_batch_size)
 
         # Prepare text embeddings for controlnet
         # controlnet_text_embeddings_c = text_embeddings.repeat_interleave(

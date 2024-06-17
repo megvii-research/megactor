@@ -362,7 +362,7 @@ def crop_and_resize_tensor_with_face_rects(pixel_values, faces, target_size = (5
         t = min(top, t)
         r = max(r, right)
         b = max(b, bottom)
-        all_face_rects.extend(face_rects)
+        all_face_rects.extend(face_rects[:1])
     face_center = ((l + r) // 2, (t + b) // 2)
     output_values, bbox = crop_and_resize_tensor(pixel_values, target_size=target_size, center=face_center)
 
@@ -405,18 +405,26 @@ def crop_and_resize_tensor_face(pixel_values : torch.Tensor,
 
     return pixel_values.cpu()
 
-def crop_move_face(frames, crop_rects, bbox, target_size = (512, 512), top_margin=0.4, bottom_margin=0.1):
+def crop_move_face(frames, faces, target_size = (512, 512), top_margin=0.4, bottom_margin=0.1):
     # 将除要裁剪的人脸以外的其他区域全部保留下来，但是涂成黑色，只有人脸区域保留
     # is_get_head: 是否获取包含更多头部（发际线以上的部位作为Condition）
     # 假设 frame 是 (B, C, H, W) 的格式
     L = frames.shape[0]
     output_sequence = list()
-    ptop, pbottom, pleft, pright = bbox
+    b, channels, height, width = frames.shape
     for i in range(L):
-        frame, crop_rect = frames[i: i + 1], crop_rects[i]
-        b, channels, height, width = frame.shape
-        
-        left, top, right, bottom = crop_rect
+        frame = frames[i: i + 1]
+        face_rects = []
+        for j, ids in enumerate(faces['image_ids']):
+            if i == ids:
+                face_rects.append(faces['rects'][j])
+        if len(face_rects) == 0:
+            if len(all_face_rects) > 0:
+                face_rects = [all_face_rects[-1]]
+            else:
+                return None, None, None, None
+        face_rect = face_rects[0]
+        left, top, right, bottom = face_rect
         face_w = right - left
         face_h = bottom - top
         # padding = max(face_w, face_h) // 2
@@ -436,14 +444,13 @@ def crop_move_face(frames, crop_rects, bbox, target_size = (512, 512), top_margi
         frame_cropped = torch.zeros_like(frame).float()
         move_face = frame[:, :, int(top):int(bottom), int(left):int(right)].float()
         frame_cropped[:, :, int(top):int(bottom), int(left):int(right)] = move_face
-        frame_cropped = frame_cropped[:, :, ptop: pbottom, pleft: pright]
+        # frame_cropped = frame_cropped[:, :, ptop: pbottom, pleft: pright]
 
         target_height, target_width = target_size
         frame_resized = torch.nn.functional.interpolate(frame_cropped, size=(target_height, target_width), mode='bilinear', align_corners=False)
         output_sequence.append(frame_resized)
     output_frames = torch.cat(output_sequence, dim=0)
     return output_frames
-
 
 
 def get_rect_length(left, top, right, bottom, width, height):
@@ -604,11 +611,6 @@ def crop_move_face_org(
     crop_rect = None, 
     use_mask_rate=0., mask_rate=0., color_jit_rate=0., 
     is_get_head=False,) -> torch.Tensor:
-    # 将除要裁剪的人脸以外的其他区域全部保留下来，但是涂成黑色，只有人脸区域保留
-    # use_mask_rate: 使用打上黑色的patch_mask
-    # mask_rate: 决定最后的结果，有mask_rate的范围被打上黑色的patch_mask, 会将最终图像化成16*16个patch
-    # color_jit_rate: 有color_jit_rate的概率使用颜色变换的操作
-    # is_get_head: 是否获取包含更多头部（发际线以上的部位作为Condition）
     # 假设 frame 是 (B, C, H, W) 的格式
     b, channels, height, width = frame.shape
     

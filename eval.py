@@ -43,9 +43,10 @@ def eval(source_path, driver_path,
     clip_image_type="",
     concat_noise_image_type="",
     do_classifier_free_guidance="",
-    contour_preserve_generation=False
+    contour_preserve_generation=False,
+    frame_sample_config=[0, -1, 1]
     ):
-
+    set_seed(random_seed)
     if config is None:
         config = OmegaConf.load(config_path)
     if model is None:
@@ -71,7 +72,7 @@ def eval(source_path, driver_path,
     size = config.size
 
     # Load control and source image
-    control_data = VideoReader(driver_path).read()[::1]
+    control_data = VideoReader(driver_path).read()[frame_sample_config[0]:frame_sample_config[1]:frame_sample_config[2]][:50]
     video_length = control_data.shape[0]
     
     if source_path.endswith(".mp4") or source_path.endswith(".gif"):
@@ -114,11 +115,18 @@ def eval(source_path, driver_path,
             _, __, ldm = dwpose_model.dwpose_model(cur_control, output_type='np', image_resolution=size[0], get_mark=True)
             ldm = ldm["faces_all"][0] * size[0]
 
-            masked_frame = np.zeros_like(cur_control)
+            xmin, xmax, ymin, ymax = 1e6, 0, 1e6, 0
             for kp_index_begin, kp_index_end in [(36, 42), (42, 48), (48, 68)]:
                 x_mean, y_mean = np.mean(ldm[kp_index_begin: kp_index_end], axis=0) # left eyes
-                xmin, xmax, ymin, ymax = get_patch_div4(x_mean, y_mean, size[0], size[1])
-                masked_frame[int(ymin):int(ymax), int(xmin):int(xmax), :] = cur_control[int(ymin):int(ymax), int(xmin):int(xmax), :]
+                top, bottom, left, right = get_patch_div4(x_mean, y_mean, size[0], size[1])
+                xmin = min(xmin, left)
+                xmax = max(xmax, right)
+                ymin = min(ymin, top)
+                ymax = max(ymax, bottom)
+        for frame_index in range(video_length):
+            cur_control = control_crop[frame_index]
+            masked_frame = np.zeros_like(cur_control)
+            masked_frame[int(ymin):int(ymax), int(xmin):int(xmax), :] = cur_control[int(ymin):int(ymax), int(xmin):int(xmax), :]
             control_frames.append(masked_frame)
 
             if frame_index == 0:
@@ -131,7 +139,7 @@ def eval(source_path, driver_path,
         
     else:        
         control = control.to(device, dtype=weight_type)
-        pixel_values_pose = crop_move_face(control, all_face_rects, control_bbox, target_size=size)
+        pixel_values_pose = crop_move_face(control, all_face_rects, target_size=size)
 
     color_BW_weights = torch.tensor([0.2989, 0.5870, 0.1140]).view(1, 3, 1, 1).to(device, dtype=weight_type)
     pixel_values_pose = torch.sum(pixel_values_pose * color_BW_weights, dim=1, keepdim=True).repeat(1, 3, 1, 1)
@@ -199,7 +207,7 @@ def eval(source_path, driver_path,
     else:
         save_videos_grid(
             samples_per_video[:, :, 1:, ...], f"./{source_name}_{video_name}.mp4", save_every_image=False, fps=25)
-
+    return model, image_processor, image_encoder
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -230,5 +238,6 @@ if __name__ == "__main__":
         clip_image_type="background",
         concat_noise_image_type="origin",
         do_classifier_free_guidance=True,
-        contour_preserve_generation=args.contour_reserve
+        contour_preserve_generation=args.contour_reserve,
+        frame_sample_config=[0, -1, 1]
         )
