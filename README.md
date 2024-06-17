@@ -11,8 +11,7 @@
   <br>
   <a href='https://arxiv.org/abs/2405.20851'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a>
   <a href='https://megactor.github.io/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>
-  
-  <a href='https://f4c5-58-240-80-18.ngrok-free.app/'>[![General badge](https://img.shields.io/badge/DEMO-RUNNING-<COLOR>.svg)](https://f4c5-58-240-80-18.ngrok-free.app/)</a>
+  <a href='https://f4c5-58-240-80-18.ngrok-free.app/'><img src='https://img.shields.io/badge/DEMO-RUNNING-<COLOR>.svg'></a>
   <br>
 
 ## News & TODO List
