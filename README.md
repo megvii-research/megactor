@@ -17,7 +17,7 @@
 - **[✅2024.05.24]** Inference settings are released.
 - **[✅2024.05.31]** [Arxiv](https://arxiv.org/abs/2405.20851) paper are released.
 - **[✅2024.06.13]** [Data curation pipeline](https://github.com/megvii-research/megactor/tree/main/data_processing) are released .
-
+- **[🔥🔥🔥 2024.06.17]** [Demo Gradio Online](https://f4c5-58-240-80-18.ngrok-free.app/) are released .
 - **[❌]** Training setup to be released.
 
 
