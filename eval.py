@@ -44,7 +44,9 @@ def eval(source_path, driver_path,
     concat_noise_image_type="",
     do_classifier_free_guidance="",
     contour_preserve_generation=False,
-    frame_sample_config=[0, -1, 1]
+    frame_sample_config=[0, -1, 1],
+    show_progressbar=True,
+    visualization=False
     ):
     set_seed(random_seed)
     if config is None:
@@ -109,24 +111,28 @@ def eval(source_path, driver_path,
         left, top = dist_point[:, :].min(axis=0)
         dist_point = np.array([[left, top], [right, bottom], [left, bottom]]).astype("int32")
         control_frames = []
+        patch_indices = [[1e6, 0, 1e6, 0], ] * 3
 
         for frame_index in range(video_length):
             cur_control = control_crop[frame_index]
             _, __, ldm = dwpose_model.dwpose_model(cur_control, output_type='np', image_resolution=size[0], get_mark=True)
             ldm = ldm["faces_all"][0] * size[0]
 
-            xmin, xmax, ymin, ymax = 1e6, 0, 1e6, 0
-            for kp_index_begin, kp_index_end in [(36, 42), (42, 48), (48, 68)]:
+            for patch_idx, (kp_index_begin, kp_index_end) in enumerate([(36, 42), (42, 48), (48, 68)]):
+                xmin, xmax, ymin, ymax = patch_indices[patch_idx]
                 x_mean, y_mean = np.mean(ldm[kp_index_begin: kp_index_end], axis=0) # left eyes
-                top, bottom, left, right = get_patch_div4(x_mean, y_mean, size[0], size[1])
+                left, right, top, bottom = get_patch_div4(x_mean, y_mean, size[0], size[1])
                 xmin = min(xmin, left)
                 xmax = max(xmax, right)
                 ymin = min(ymin, top)
                 ymax = max(ymax, bottom)
+                patch_indices[patch_idx] = [xmin, xmax, ymin, ymax]
+
         for frame_index in range(video_length):
             cur_control = control_crop[frame_index]
             masked_frame = np.zeros_like(cur_control)
-            masked_frame[int(ymin):int(ymax), int(xmin):int(xmax), :] = cur_control[int(ymin):int(ymax), int(xmin):int(xmax), :]
+            for xmin, xmax, ymin, ymax in patch_indices:
+                masked_frame[int(ymin):int(ymax), int(xmin):int(xmax), :] = cur_control[int(ymin):int(ymax), int(xmin):int(xmax), :]
             control_frames.append(masked_frame)
 
             if frame_index == 0:
@@ -138,7 +144,6 @@ def eval(source_path, driver_path,
         pixel_values_pose = torch.stack(control_frames, dim=0).to(device, dtype=weight_type).permute(0, 3, 1, 2)
         
     else:        
-        # pixel_values_pose = crop_move_face(control, all_face_rects, control_bbox, target_size=size)\
         cropped_faces = face_detector(control_cropped)
         control_cropped = control_cropped.to(device, dtype=weight_type)
         pixel_values_pose = crop_move_face(control_cropped, cropped_faces, target_size=size)
@@ -192,6 +197,7 @@ def eval(source_path, driver_path,
             do_classifier_free_guidance=do_classifier_free_guidance,
             add_noise_image_type="",
             ref_img_condition=ref_img_condition,
+            show_progressbar=True,
             visualization=False
         )
     if isinstance(samples_per_video, list):

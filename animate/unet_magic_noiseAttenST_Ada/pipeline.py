@@ -610,6 +610,7 @@ class AnimationPipeline(DiffusionPipeline):
             do_classifier_free_guidance=True,
             add_noise_image_type="",
             ref_img_condition=None,
+            show_progressbar=False,
             **kwargs,
     ):
         """
@@ -767,7 +768,7 @@ class AnimationPipeline(DiffusionPipeline):
             ref_img_condition = torch.cat([ref_img_condition, ref_img_condition])
         
         # Denoising loop
-        for i, t in tqdm(enumerate(timesteps), total=len(timesteps), disable=(rank != 0)):
+        for i, t in tqdm(enumerate(timesteps), total=len(timesteps), disable=(rank != 0 or not show_progressbar)):
             if num_actual_inference_steps is not None and i < num_inference_steps - num_actual_inference_steps:
                 continue
 

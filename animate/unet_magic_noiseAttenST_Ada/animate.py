@@ -269,7 +269,8 @@ class MagicAnimate(torch.nn.Module):
         if is_main_process:
             print("Initialization Done!")
 
-    def infer(self, source_image, image_prompts, motion_sequence, random_seed, step, guidance_scale, context, size=(512, 768),froce_text_embedding_zero=False, ref_concat_image_noises_latents=None, do_classifier_free_guidance=True, add_noise_image_type="", ref_img_condition=None, visualization=False):
+
+    def infer(self, source_image, image_prompts, motion_sequence, random_seed, step, guidance_scale, context, size=(512, 768),froce_text_embedding_zero=False, ref_concat_image_noises_latents=None, do_classifier_free_guidance=True, add_noise_image_type="", ref_img_condition=None, visualization=False, show_progressbar=False):
         prompt = n_prompt = ""
         step = int(step)
         guidance_scale = float(guidance_scale)
@@ -329,6 +330,7 @@ class MagicAnimate(torch.nn.Module):
             do_classifier_free_guidance = do_classifier_free_guidance,
             add_noise_image_type = add_noise_image_type,
             ref_img_condition=ref_img_condition,
+            show_progressbar=show_progressbar,
         ).videos
         if visualization == False:
             return sample[:, :, :original_length]
@@ -416,7 +418,8 @@ class MagicAnimate(torch.nn.Module):
             pixel_values_ref_img = pixel_values_ref_img / 127.5 - 1.
 
             pixel_values_pose = batch['swapped'].to(self.device, dtype=self.weight_type) # b c h w
-            pixel_values_pose = rearrange(pixel_values_pose  / 255., "b f c h w -> b f h w c", b=self.train_batch_size) 
+            pixel_values_pose = rearrange(pixel_values_pose  / 255., "b f c h w -> b f h w c") 
+            batch_size = pixel_values_pose.shape[0]
             concat_poses = batch['concat_poses'].to(self.device, dtype=self.weight_type)
             concat_background = batch['concat_background'].to(self.device, dtype=self.weight_type)
             clip_conditions = batch['clip_conditions'].to(self.device, dtype=self.weight_type)
@@ -432,7 +435,7 @@ class MagicAnimate(torch.nn.Module):
             with torch.no_grad():
                 latents = self.vae.encode(pixel_values).latent_dist
                 latents = latents.sample()
-                latents = rearrange(latents, "(b f) c h w -> b c f h w", b=self.train_batch_size)
+                latents = rearrange(latents, "(b f) c h w -> b c f h w", b=batch_size)
                 latents = latents * 0.18215
 
                 ref_concat_image_noises = concat_poses
@@ -478,7 +481,7 @@ class MagicAnimate(torch.nn.Module):
 
             video_length = pixel_values_pose.shape[1]
             pixel_values_pose = pixel_values_pose.to(self.device, dtype=self.weight_type) # b c h w
-            pixel_values_pose = rearrange(pixel_values_pose  / 255., "b f c h w -> b f h w c", b=self.train_batch_size) 
+            pixel_values_pose = rearrange(pixel_values_pose  / 255., "b f c h w -> b f h w c") 
             concat_poses = concat_poses.to(self.device, dtype=self.weight_type)
             concat_background = concat_background.to(self.device, dtype=self.weight_type)
             clip_conditions = clip_conditions.to(self.device, dtype=self.weight_type)
