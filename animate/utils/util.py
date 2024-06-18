@@ -440,7 +440,7 @@ def crop_move_face(frames, faces, target_size = (512, 512), top_margin=0.4, bott
         top -= top_margin * delta_hight
         bottom += bottom_margin * delta_hight
         left, top, right, bottom = max(left, 0), max(top, 0), min(right, width), min(bottom, height)
-
+        
         frame_cropped = torch.zeros_like(frame).float()
         move_face = frame[:, :, int(top):int(bottom), int(left):int(right)].float()
         frame_cropped[:, :, int(top):int(bottom), int(left):int(right)] = move_face
@@ -451,6 +451,45 @@ def crop_move_face(frames, faces, target_size = (512, 512), top_margin=0.4, bott
         output_sequence.append(frame_resized)
     output_frames = torch.cat(output_sequence, dim=0)
     return output_frames
+
+
+# def crop_move_face(frames, faces, p_bbox, target_size = (512, 512), top_margin=0.4, bottom_margin=0.1):
+#     # 将除要裁剪的人脸以外的其他区域全部保留下来，但是涂成黑色，只有人脸区域保留
+#     # is_get_head: 是否获取包含更多头部（发际线以上的部位作为Condition）
+#     # 假设 frame 是 (B, C, H, W) 的格式
+#     L = frames.shape[0]
+#     output_sequence = list()
+#     b, channels, height, width = frames.shape
+#     ptop, pbottom, pleft, pright = p_bbox
+#     for i in range(L):
+#         frame = frames[i: i + 1]
+
+#         left, top, right, bottom = faces[i]
+#         face_w = right - left
+#         face_h = bottom - top
+        
+#         if face_w < face_h:
+#             left = left - (face_h - face_w) // 2
+#             right = right + (face_h - face_w) // 2
+#         else:
+#             top = top - (face_w - face_h) // 2
+#             bottom = bottom + (face_w - face_h) // 2
+
+#         delta_hight = (bottom - top)
+#         top -= top_margin * delta_hight
+#         bottom += bottom_margin * delta_hight
+#         left, top, right, bottom = max(left, 0), max(top, 0), min(right, width), min(bottom, height)
+
+#         frame_cropped = torch.zeros_like(frame).float()
+#         move_face = frame[:, :, int(top):int(bottom), int(left):int(right)].float()
+#         frame_cropped[:, :, int(top):int(bottom), int(left):int(right)] = move_face
+#         frame_cropped = frame_cropped[:, :, ptop: pbottom, pleft: pright]
+
+#         target_height, target_width = target_size
+#         frame_resized = torch.nn.functional.interpolate(frame_cropped, size=(target_height, target_width), mode='bilinear', align_corners=False)
+#         output_sequence.append(frame_resized)
+#     output_frames = torch.cat(output_sequence, dim=0)
+#     return output_frames
 
 
 def get_rect_length(left, top, right, bottom, width, height):
@@ -497,7 +536,6 @@ def wide_crop_face(pixel_values, faces, target_size = (512, 512)) -> torch.Tenso
     bottom = y_c + distance_to_edge
     face_center = ((l + r) // 2, (t + b) // 2)
     bbox = [int(top), int(bottom), int(left), int(right)]
-    print(bbox, pixel_values.shape)
     pixel_values = pixel_values[:, :, int(top):int(bottom), int(left):int(right)].float()
     target_height, target_width = target_size
     output_values = torch.nn.functional.interpolate(pixel_values, size=(target_height, target_width), mode='bilinear', align_corners=False)

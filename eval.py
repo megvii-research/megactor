@@ -98,10 +98,10 @@ def eval(source_path, driver_path,
     control = torch.tensor(control_data).to(torch.device("cpu"), dtype=weight_type)
     control = rearrange(control, "b h w c -> b c h w") # b c h w
     faces = face_detector(control)
-    _, all_face_rects, control_bbox, control_crop  = crop_and_resize_tensor_with_face_rects(control, faces, target_size=size)
+    _, all_face_rects, control_bbox, control_cropped  = crop_and_resize_tensor_with_face_rects(control, faces, target_size=size)
 
     cur_ref = ref_image.permute(0, 2, 3, 1)[0].cpu().numpy()
-    control_crop = control_crop.permute(0, 2, 3, 1).cpu().numpy()
+    control_crop = control_cropped.permute(0, 2, 3, 1).cpu().numpy()
     if contour_preserve_generation:
         _, __, dist_point = dwpose_model.dwpose_model(cur_ref, output_type='np', image_resolution=size[0], get_mark=True)
         dist_point = dist_point["faces_all"][0] * size[0]
@@ -138,9 +138,11 @@ def eval(source_path, driver_path,
         pixel_values_pose = torch.stack(control_frames, dim=0).to(device, dtype=weight_type).permute(0, 3, 1, 2)
         
     else:        
-        control = control.to(device, dtype=weight_type)
-        pixel_values_pose = crop_move_face(control, all_face_rects, target_size=size)
-
+        # pixel_values_pose = crop_move_face(control, all_face_rects, control_bbox, target_size=size)\
+        cropped_faces = face_detector(control_cropped)
+        control_cropped = control_cropped.to(device, dtype=weight_type)
+        pixel_values_pose = crop_move_face(control_cropped, cropped_faces, target_size=size)
+    
     color_BW_weights = torch.tensor([0.2989, 0.5870, 0.1140]).view(1, 3, 1, 1).to(device, dtype=weight_type)
     pixel_values_pose = torch.sum(pixel_values_pose * color_BW_weights, dim=1, keepdim=True).repeat(1, 3, 1, 1)
     pixel_values_pose = pixel_values_pose.clamp(0, 255.)
@@ -218,7 +220,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=42, help='Specify random seed.')
     parser.add_argument("--num-steps", type=int, default=25, help='Specify steps of denoising, more steps take more time to yield better result.')
     parser.add_argument("--guidance-scale", type=float, default=4.5, help='Specify classifier-free guidance scale.')
-    parser.add_argument("--contour-reserve", action='store_true', help='Specify whether to mask the face other  than eyes and mouth to better align face shape.')
+    parser.add_argument("--contour-preserve", action='store_true', help='Specify whether to mask the face other  than eyes and mouth to better align face shape.')
 
     args = parser.parse_args()
     eval(args.source, args.driver, 
@@ -238,6 +240,6 @@ if __name__ == "__main__":
         clip_image_type="background",
         concat_noise_image_type="origin",
         do_classifier_free_guidance=True,
-        contour_preserve_generation=args.contour_reserve,
+        contour_preserve_generation=args.contour_preserve,
         frame_sample_config=[0, -1, 1]
         )
