@@ -15,7 +15,7 @@ from collections import OrderedDict
 import torch
 import torch.nn.functional as F
 
-from animate.utils.util import save_videos_grid, pad_image, crop_move_face, crop_and_resize_tensor_with_face_rects, crop_and_resize_tensor, wide_crop_face, get_patch_div4
+from animate.utils.util import save_videos_grid, pad_image, crop_move_face, crop_and_resize_tensor_with_face_rects, crop_and_resize_tensor, wide_crop_face, get_patch_div
 from animate.utils.util import crop_and_resize_tensor_face
 from accelerate.utils import set_seed
 from animate.utils.videoreader import VideoReader
@@ -111,17 +111,17 @@ def eval(source_path, driver_path,
         left, top = dist_point[:, :].min(axis=0)
         dist_point = np.array([[left, top], [right, bottom], [left, bottom]]).astype("int32")
         control_frames = []
-        patch_indices = [[1e6, 0, 1e6, 0], ] * 3
+        patch_indices = [[1e6, 0, 1e6, 0], ] * 4
 
         for frame_index in range(video_length):
             cur_control = control_crop[frame_index]
             _, __, ldm = dwpose_model.dwpose_model(cur_control, output_type='np', image_resolution=size[0], get_mark=True)
             ldm = ldm["faces_all"][0] * size[0]
 
-            for patch_idx, (kp_index_begin, kp_index_end) in enumerate([(36, 42), (42, 48), (48, 68)]):
+            for patch_idx, (kp_index_begin, kp_index_end, div_n) in enumerate([(36, 42, 8), (42, 48, 8), (48, 68, 8), (17, 27, 8)]):
                 xmin, xmax, ymin, ymax = patch_indices[patch_idx]
                 x_mean, y_mean = np.mean(ldm[kp_index_begin: kp_index_end], axis=0) # left eyes
-                left, right, top, bottom = get_patch_div4(x_mean, y_mean, size[0], size[1])
+                left, right, top, bottom = get_patch_div(x_mean, y_mean, size[0], size[1], div_n)
                 xmin = min(xmin, left)
                 xmax = max(xmax, right)
                 ymin = min(ymin, top)
@@ -130,6 +130,7 @@ def eval(source_path, driver_path,
 
         for frame_index in range(video_length):
             cur_control = control_crop[frame_index]
+            # masked_frame = cur_control / 2
             masked_frame = np.zeros_like(cur_control)
             for xmin, xmax, ymin, ymax in patch_indices:
                 masked_frame[int(ymin):int(ymax), int(xmin):int(xmax), :] = cur_control[int(ymin):int(ymax), int(xmin):int(xmax), :]
@@ -147,7 +148,8 @@ def eval(source_path, driver_path,
         cropped_faces = face_detector(control_cropped)
         control_cropped = control_cropped.to(device, dtype=weight_type)
         pixel_values_pose = crop_move_face(control_cropped, cropped_faces, target_size=size)
-    
+
+    cv2.imwrite('test.png', pixel_values_pose[0].permute(1, 2, 0).cpu().numpy().astype('uint8'))
     color_BW_weights = torch.tensor([0.2989, 0.5870, 0.1140]).view(1, 3, 1, 1).to(device, dtype=weight_type)
     pixel_values_pose = torch.sum(pixel_values_pose * color_BW_weights, dim=1, keepdim=True).repeat(1, 3, 1, 1)
     pixel_values_pose = pixel_values_pose.clamp(0, 255.)
@@ -175,6 +177,7 @@ def eval(source_path, driver_path,
             ref_img_clips.append(torch.tensor(ref_img_clip).permute(2, 0, 1))
         concat_poses = torch.stack(ref_concat_image_noises, dim=0)[None, ...]
         concat_background = torch.stack(ref_img_background_masks, dim=0)[None, ...]
+        # concat_background = - F.max_pool2d(-concat_background,  7, padding=3)
         clip_conditions = torch.stack(ref_img_clips, dim=0)[None, ...]
 
     pixel_values_ref_img, image_prompt_embeddings, pixel_values_pose, ref_concat_image_noises_latents, ref_img_condition = pipeline.preprocess_eval(
