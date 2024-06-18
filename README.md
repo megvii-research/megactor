@@ -77,9 +77,10 @@ https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c7d71435-c98a-
 ## Training
 To be released.
 ## Inference
-Currently only single-GPU inference is supported.
+Currently only single-GPU inference is supported. We highly recommend that you use ```--contour-preserve``` arg the better preserve the shape of the source face.
 
-    CUDA_VISIBLE_DEVICES=0 python eval.py --config configs/infer12_catnoise_warp08_power_vasa.yaml --source {source image path} --driver {driving video path}
+    CUDA_VISIBLE_DEVICES=0 python eval.py --config configs/infer12_catnoise_warp08_power_vasa.yaml --source {source image path} --driver {driving video path} --contour-preserve
+
 
 ## Demo
 For gradio interface, please run
