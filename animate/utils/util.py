@@ -542,11 +542,11 @@ def wide_crop_face(pixel_values, faces, target_size = (512, 512)) -> torch.Tenso
     return min_face_size, all_face_rects, bbox, output_values
 
 
-def get_patch_div4(x_mean, y_mean, H, W):
+def get_patch_div(x_mean, y_mean, H, W, n):
     # 以x_mean, y_mean为中心，生成一个大小为H/4,W/4的矩形
     # 计算矩形半高和半宽
-    half_height = H / 8
-    half_width = W / 8
+    half_height = H / n
+    half_width = W / n
 
     # 计算矩形的边界
     xmin = max(0, x_mean - half_width)
