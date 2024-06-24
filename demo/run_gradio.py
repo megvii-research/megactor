@@ -46,8 +46,6 @@ def animate(reference_image, motion_sequence, steps, guidance_scale, sample_l, s
                 num_steps=steps,
                 device=torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu"), 
                 model=model,
-                # face_detector=None,
-                # dwpose_model=None,
                 image_processor=image_processor,
                 image_encoder=image_encoder,
                 clip_image_type="background",
@@ -85,7 +83,6 @@ with gr.Blocks() as demo:
         motion_sequence  = gr.Video(format="mp4", label="Driver video")
         
         with gr.Column():
-            # random_seed         = gr.Number(label="Random seed", value=42, info="default: 42")
             sampling_steps      = gr.Number(label="Sampling steps", value=25, info="default: 25",  precision=0)
             guidance_scale      = gr.Number(label="Guidance scale", value=4.5, info="default: 4.5")
             sample_l      = gr.Number(label="Sample from n-th frame of the video", value=0,  precision=0)
@@ -95,13 +92,6 @@ with gr.Blocks() as demo:
 
     def read_video(video, size=512):
         return video
-        # size = int(size)
-        # reader = imageio.get_reader(video)
-        # # fps = reader.get_meta_data()['fps']
-        # frames = []
-        # for img in reader:
-        #     frames.append(np.array(Image.fromarray(img).resize((size, size))))
-        # return frames
     
     def read_image(image, size=512):
         img = np.array(Image.fromarray(image).resize((size, size)))
