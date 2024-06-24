@@ -94,13 +94,14 @@ with gr.Blocks() as demo:
             submit              = gr.Button("Animate")
 
     def read_video(video, size=512):
-        size = int(size)
-        reader = imageio.get_reader(video)
-        # fps = reader.get_meta_data()['fps']
-        frames = []
-        for img in reader:
-            frames.append(np.array(Image.fromarray(img).resize((size, size))))
-        return frames
+        return video
+        # size = int(size)
+        # reader = imageio.get_reader(video)
+        # # fps = reader.get_meta_data()['fps']
+        # frames = []
+        # for img in reader:
+        #     frames.append(np.array(Image.fromarray(img).resize((size, size))))
+        # return frames
     
     def read_image(image, size=512):
         img = np.array(Image.fromarray(image).resize((size, size)))
