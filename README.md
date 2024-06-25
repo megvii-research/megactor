@@ -19,7 +19,7 @@
 </div>
 
 ## News & TODO List
-- **[Todo]** Training setup to be released.
+- **[🔥🔥🔥 2024.06.25]** **Training setup released.** Please refer to [Training](https://github.com/megvii-research/megactor/edit/main/README.md#training) for details.
 - **[🔥🔥🔥 2024.06.25]** New [Gradio Demo](https://yuudi-e6n42fnlvoqd.gear-c1.openbayes.net/) online, big thanks goes to **OpenBayes**. You can also try our work in their [container](https://openbayes.com/console/public/tutorials/3IphFlojVlO).
 - **[🔥🔥🔥 2024.06.17]** [Demo Gradio Online](https://f4c5-58-240-80-18.ngrok-free.app/) are released .
 - **[🔥🔥🔥 2024.06.13]** [Data curation pipeline](https://github.com/megvii-research/megactor/tree/main/data_processing) are released .
@@ -79,11 +79,21 @@ https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c7d71435-c98a-
     ```
     
 ## Training
-To be released.
+We currently support two-stage training on single node machines.
+
+Stage1(Image training):
+```
+bash train.sh train.py ./configs/train/train_stage1.yaml {number of gpus on this node}
+```
+Stage2(Video training):
+```
+bash train.sh train.py ./configs/train/train_stage2.yaml {number of gpus on this node}
+```
+
 ## Inference
 Currently only single-GPU inference is supported. We highly recommend that you use ```--contour-preserve``` arg the better preserve the shape of the source face.
 
-    CUDA_VISIBLE_DEVICES=0 python eval.py --config configs/infer12_catnoise_warp08_power_vasa.yaml --source {source image path} --driver {driving video path} --contour-preserve
+    CUDA_VISIBLE_DEVICES=0 python eval.py --config configs/inference/inference.yaml --source {source image path} --driver {driving video path} --contour-preserve
 
 
 ## Demo
