@@ -8,6 +8,7 @@
 
   <p align=center><sup>*</sup>Equal contribution  <sup>†</sup>Lead this project <sup>‡</sup>Corresponding author</p>
 
+<div align="center">
   <br>
   <a href='https://arxiv.org/abs/2405.20851'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a>
   <a href='https://megactor.github.io/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>
@@ -15,6 +16,7 @@
   <a href='https://f4c5-58-240-80-18.ngrok-free.app/'><img src='https://img.shields.io/badge/DEMO-RUNNING-<COLOR>.svg'></a>
   <a href='https://openbayes.com/console/public/tutorials/3IphFlojVlO'><img src='https://img.shields.io/badge/CONTAINER-OpenBayes-blue.svg'></a>
   <br>
+</div>
 
 ## News & TODO List
 - **[Todo]** Training setup to be released.
