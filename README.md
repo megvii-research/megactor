@@ -8,14 +8,19 @@
 
   <p align=center><sup>*</sup>Equal contribution  <sup>†</sup>Lead this project <sup>‡</sup>Corresponding author</p>
 
+<div align="center">
   <br>
   <a href='https://arxiv.org/abs/2405.20851'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a>
   <a href='https://megactor.github.io/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>
+  <a href='https://yuudi-e6n42fnlvoqd.gear-c1.openbayes.net/'><img src='https://img.shields.io/badge/DEMO-OpenBayes-blue.svg'></a>
   <a href='https://f4c5-58-240-80-18.ngrok-free.app/'><img src='https://img.shields.io/badge/DEMO-RUNNING-<COLOR>.svg'></a>
+  <a href='https://openbayes.com/console/public/tutorials/3IphFlojVlO'><img src='https://img.shields.io/badge/CONTAINER-OpenBayes-blue.svg'></a>
   <br>
+</div>
 
 ## News & TODO List
 - **[Todo]** Training setup to be released.
+- **[🔥🔥🔥 2024.06.25]** New [Gradio Demo](https://yuudi-e6n42fnlvoqd.gear-c1.openbayes.net/) online, big thanks goes to **OpenBayes**. You can also try our work in their [container](https://openbayes.com/console/public/tutorials/3IphFlojVlO).
 - **[🔥🔥🔥 2024.06.17]** [Demo Gradio Online](https://f4c5-58-240-80-18.ngrok-free.app/) are released .
 - **[🔥🔥🔥 2024.06.13]** [Data curation pipeline](https://github.com/megvii-research/megactor/tree/main/data_processing) are released .
 - **[🔥🔥🔥 2024.05.31]** [Arxiv](https://arxiv.org/abs/2405.20851) paper are released.
