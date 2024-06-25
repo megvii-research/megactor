@@ -412,6 +412,7 @@ def crop_move_face(frames, faces, target_size = (512, 512), top_margin=0.4, bott
     L = frames.shape[0]
     output_sequence = list()
     b, channels, height, width = frames.shape
+    all_face_rects = []
     for i in range(L):
         frame = frames[i: i + 1]
         face_rects = []
@@ -424,6 +425,7 @@ def crop_move_face(frames, faces, target_size = (512, 512), top_margin=0.4, bott
             else:
                 return None, None, None, None
         face_rect = face_rects[0]
+        all_face_rects.append(face_rect)
         left, top, right, bottom = face_rect
         face_w = right - left
         face_h = bottom - top

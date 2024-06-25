@@ -14,7 +14,7 @@ from torch import nn
 from diffusers.utils import BaseOutput
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.models.attention import FeedForward
-from animate.unet_magic_noiseAttenST_Ada.orig_attention import CrossAttention
+from animate.orig_attention import CrossAttention
 
 from einops import rearrange, repeat
 import math
@@ -63,6 +63,7 @@ class VanillaTemporalModule(nn.Module):
         temporal_attention_dim_div         = 1,
         zero_initialize                    = True,
         norm_num_groups                    = 32,
+        auto_regressive=False
     ):
         super().__init__()
         
@@ -76,6 +77,7 @@ class VanillaTemporalModule(nn.Module):
             temporal_position_encoding=temporal_position_encoding,
             temporal_position_encoding_max_len=temporal_position_encoding_max_len,
             norm_num_groups=norm_num_groups,
+            auto_regressive=auto_regressive
         )
         
         if zero_initialize:
@@ -108,6 +110,7 @@ class TemporalTransformer3DModel(nn.Module):
         cross_frame_attention_mode         = None,
         temporal_position_encoding         = False,
         temporal_position_encoding_max_len = 24,
+        auto_regressive=False
     ):
         super().__init__()
 
@@ -132,6 +135,7 @@ class TemporalTransformer3DModel(nn.Module):
                     cross_frame_attention_mode=cross_frame_attention_mode,
                     temporal_position_encoding=temporal_position_encoding,
                     temporal_position_encoding_max_len=temporal_position_encoding_max_len,
+                    auto_regressive=auto_regressive
                 )
                 for d in range(num_layers)
             ]
@@ -181,6 +185,7 @@ class TemporalTransformerBlock(nn.Module):
         cross_frame_attention_mode         = None,
         temporal_position_encoding         = False,
         temporal_position_encoding_max_len = 24,
+        auto_regressive=False
     ):
         super().__init__()
 
@@ -203,6 +208,7 @@ class TemporalTransformerBlock(nn.Module):
                     cross_frame_attention_mode=cross_frame_attention_mode,
                     temporal_position_encoding=temporal_position_encoding,
                     temporal_position_encoding_max_len=temporal_position_encoding_max_len,
+                    auto_regressive=auto_regressive
                 )
             )
             norms.append(nn.LayerNorm(dim))
@@ -256,7 +262,8 @@ class VersatileAttention(CrossAttention):
             attention_mode                     = None,
             cross_frame_attention_mode         = None,
             temporal_position_encoding         = False,
-            temporal_position_encoding_max_len = 24,            
+            temporal_position_encoding_max_len = 24, 
+            auto_regressive=False,           
             *args, **kwargs
         ):
         super().__init__(*args, **kwargs)
@@ -264,6 +271,7 @@ class VersatileAttention(CrossAttention):
 
         self.attention_mode = attention_mode
         self.is_cross_attention = kwargs["cross_attention_dim"] is not None
+        self.auto_regressive = auto_regressive
         
         self.pos_encoder = PositionalEncoding(
             kwargs["query_dim"],
@@ -312,6 +320,11 @@ class VersatileAttention(CrossAttention):
                 target_length = query.shape[1]
                 attention_mask = F.pad(attention_mask, (0, target_length), value=0.0)
                 attention_mask = attention_mask.repeat_interleave(self.heads, dim=0)
+        else:
+            attention_mask = torch.ones(1, query.shape[1], key.shape[1], device=query.device, dtype=query.dtype)
+            attention_mask = attention_mask.repeat_interleave(query.shape[0], dim=0)
+        if self.auto_regressive:
+            attention_mask = torch.tril(attention_mask)
 
         # attention, what we cannot get enough of
         if self._use_memory_efficient_attention_xformers:
