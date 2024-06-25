@@ -1,0 +1,109 @@
+output_dir: "/data/train_logs/"
+
+model_type: "unet_magic_noiseAttenST_Ada"
+pretrained_model_path: "./weights/StableDiffusion"
+pretrained_vae_path: "./weights/sd-vae-ft-mse"
+pretrained_appearance_encoder_path: "./weights/appearance_encoder"
+pretrained_controlnet_path: ""
+motion_module: "/data/code/yangshurong/cache1/animatediff_model/v3_sd15_mm.ckpt"
+inference_config: "configs/inference/magic_inference.yaml"
+pretrained_unet_path: ""
+
+clip_image_type: "background"
+concat_noise_image_type: "origin"
+valid_seed: 42
+size: [512, 512]
+
+appearance_controlnet_motion_checkpoint_path: "./weights/checkpoint-steps9000.ckpt"
+
+unet_additional_kwargs:
+  unet_use_cross_frame_attention: false
+  unet_use_temporal_attention: false
+  use_motion_module: true 
+  motion_module_resolutions:
+  - 1
+  - 2
+  - 4
+  - 8
+  motion_module_mid_block: false
+  motion_module_decoder_only: false
+  motion_module_type: Vanilla
+  motion_module_kwargs:
+    num_attention_heads: 8
+    num_transformer_block: 1
+    attention_block_types:
+    - Temporal_Self
+    - Temporal_Self
+    temporal_position_encoding: true
+    temporal_position_encoding_max_len: 32
+    temporal_attention_dim_div: 1
+  use_image_condition            : false
+  use_refer_ada: true
+
+
+noise_scheduler_kwargs:
+  num_train_timesteps: 1000
+  beta_start:          0.00085
+  beta_end:            0.012
+  beta_schedule:       "scaled_linear" 
+  steps_offset:        1
+  clip_sample:         false
+  rescale_betas_zero_snr: true
+
+train_data:
+  warp_rate: 0.25
+  color_jit_rate: 0
+  use_swap_rate: 0.5
+  data_dirs: [
+    '/data/data/VFHQ_webdataset_20240404'
+    ]
+  frame_stride:       2
+  video_length:       12
+  shuffle:            true
+  resampled:          true
+  dataset_length:     1000000
+
+validation_data:
+  source_image:
+    - "./test_data/source/1.png"
+    - "./test_data/source/2.png"
+    - "./test_data/source/3.png"
+
+  video_path:
+    - "./test_data/driver/1.mp4"
+    - "./test_data/driver/1.mp4"
+    - "./test_data/driver/1.mp4"
+
+  num_inference_steps: 25
+  guidance_scale: 4.5
+  frame_stride: 1
+  S: 1
+
+context:
+  context_frames: 16
+  context_stride: 1
+  context_overlap: 8
+
+trainable_modules:
+  # - "appearance_encoder"
+  # - "unet"
+  - "motion_module"
+
+gradient_accumulation_steps: 2
+
+learning_rate:    1.e-5
+train_batch_size: 1
+num_workers: 4
+
+max_train_epoch:      100
+max_train_steps:      1000000
+checkpointing_epochs: -1
+checkpointing_steps:  1000
+
+validation_steps:       100
+validation_steps_tuple: []
+
+mixed_precision_training: true
+enable_xformers_memory_efficient_attention: true
+
+is_debug: False
