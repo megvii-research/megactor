@@ -18,6 +18,7 @@
 </div>
 
 ## News & TODO List
+- **[TODO]** Stay tuned for our upcoming release version. It will boast enhanced flexibility, enabling multimodal driving (both Image and Audio), as well as the simulation of individual modal inputs (Image or Audio). We are preparing to launch the new version at the end of July.
 - **[🔥🔥🔥 2024.06.25]** **Training setup released.** Please refer to [Training](https://github.com/megvii-research/megactor/edit/main/README.md#training) for details.
 - **[🔥🔥🔥 2024.06.25]** Integrated into [OpenBayes](https://openbayes.com/), see the [demo](https://openbayes.com/console/public/tutorials/3IphFlojVlO). Thank **OpenBayes** team!
 - **[🔥🔥🔥 2024.06.17]** [Demo Gradio Online](https://f4c5-58-240-80-18.ngrok-free.app/) are released .
