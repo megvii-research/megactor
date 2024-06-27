@@ -38,7 +38,7 @@ def animate(reference_image, motion_sequence, steps, guidance_scale, sample_l, s
             n_gpus[i] = True
             model, image_processor, image_encoder = eval(save_path, motion_sequence, 
                 config=None,
-                config_path="configs/infer12_catnoise_warp08_power_vasa.yaml",
+                config_path="configs/inference/inference.yaml ",
                 output_path=animation_path, 
                 random_seed=42,
                 guidance_scale=guidance_scale,
