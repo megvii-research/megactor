@@ -20,9 +20,9 @@ steps:          25
 guidance_scale: 4.5
 
 context:
-  context_frames: 8
+  context_frames: 16
   context_stride: 1
-  context_overlap: 4
+  context_overlap: 8
 
 inference_config: "configs/inference/magic_inference.yaml"
 size: [512, 512]
