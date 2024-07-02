@@ -1,5 +1,6 @@
 ## Dataset
 
+You may refer to a 10-min dataset in the following format at [**Google Drive**](https://drive.google.com/drive/folders/1GVhCd3syxl2-oqF7TiPyoy7VrWJXbrQs?usp=drive_link).
 
 For better data organization and ease of storage and retrieval, we have bundled video clips into tar archives. The specific format is shown below.
 
