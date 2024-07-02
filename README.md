@@ -19,6 +19,7 @@
 
 ## News & TODO List
 - **[TODO]** Stay tuned for our upcoming release version. It will boast enhanced flexibility, enabling multimodal driving (both Image and Audio), as well as the simulation of individual modal inputs (Image or Audio). We are preparing to launch the new version at the end of July.
+- **[✨✨✨ 2024.07.02]** For ease of replication, we provide a 10-minute dataset available on [Google Drive](https://drive.google.com/drive/folders/1GVhCd3syxl2-oqF7TiPyoy7VrWJXbrQs?usp=drive_link), which should yield satisfactory performance..
 - **[🔥🔥🔥 2024.06.25]** **Training setup released.** Please refer to [Training](https://github.com/megvii-research/megactor/edit/main/README.md#training) for details.
 - **[🔥🔥🔥 2024.06.25]** Integrated into [OpenBayes](https://openbayes.com/), see the [demo](https://openbayes.com/console/public/tutorials/3IphFlojVlO). Thank **OpenBayes** team!
 - **[🔥🔥🔥 2024.06.17]** [Demo Gradio Online](https://f4c5-58-240-80-18.ngrok-free.app/) are released .
@@ -67,7 +68,7 @@ https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c7d71435-c98a-
     ```
 * Dataset.
    * For a detailed description of the data processing procedure, please refer to the accompanying below. [Data Process Pipeline](https://github.com/megvii-research/megactor/tree/main/data_processing)
-
+   * You may refer to a 10-min dataset in this format at [Google Drive](https://drive.google.com/drive/folders/1GVhCd3syxl2-oqF7TiPyoy7VrWJXbrQs?usp=drive_link).
   
 * Pretrained weights
   
