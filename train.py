@@ -1,11 +1,12 @@
-# moveFace，黑白人脸训练脚本
+# Copyright 2024 Megvii inc.
+#
+# Copyright (2024) MegActor Authors.
+#
+# Megvii Inc. retain all intellectual property and proprietary rights in 
+# and to this material, related documentation and any modifications thereto. 
+# Any use, reproduction, disclosure or distribution of this material and related 
+# documentation without an express license agreement from Megvii Inc. is strictly prohibited.
 
-# 同时支持使用换脸数据和风格化数据。这里会根据原视频GT的人脸检测框，来裁剪换脸数据或者是风格化数据
-# 逻辑为：从数据集中获取两个，一个是原始视频，一个是换脸数据
-# 如果没有换脸数据，换脸那个key将依然是原始视频
-# 后续所有的人脸检测框均从原始视频获取，并将从换脸数据那个key获取到的value作为Condition进行裁剪
-
-# 不论是否有换脸数据，均使用Condition增广
 import os
 import math
 import random

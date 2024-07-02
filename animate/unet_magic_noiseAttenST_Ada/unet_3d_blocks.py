@@ -1,8 +1,11 @@
-# *************************************************************************
-# This file may have been modified by Bytedance Inc. (“Bytedance Inc.'s Mo-
-# difications”). All Bytedance Inc.'s Modifications are Copyright (2023) B-
-# ytedance Inc..  
-# *************************************************************************
+# Copyright 2024 Megvii inc.
+#
+# Copyright (2024) MegActor Authors.
+#
+# Megvii Inc. retain all intellectual property and proprietary rights in 
+# and to this material, related documentation and any modifications thereto. 
+# Any use, reproduction, disclosure or distribution of this material and related 
+# documentation without an express license agreement from Megvii Inc. is strictly prohibited.
 
 # Adapted from https://github.com/guoyww/AnimateDiff
 
