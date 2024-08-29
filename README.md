@@ -11,20 +11,23 @@
 <div align="center">
   <br>
   <a href='https://arxiv.org/abs/2405.20851'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a>
+  <a href='https://arxiv.org/abs/2408.14975'><img src='https://img.shields.io/badge/Paper-Arxiv-red'></a>
   <a href='https://megactor.github.io/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>
+  <a href='https://megactor-ops.github.io/'><img src='https://img.shields.io/badge/Project-Page-Green'></a>
   <a href='https://f4c5-58-240-80-18.ngrok-free.app/'><img src='https://img.shields.io/badge/DEMO-RUNNING-<COLOR>.svg'></a>
   <a href='https://openbayes.com/console/public/tutorials/3IphFlojVlO'><img src='https://img.shields.io/badge/CONTAINER-OpenBayes-blue.svg'></a>
   <br>
 </div>
 
 ## News & TODO List
-- **[TODO]** Stay tuned for our upcoming release version. It will boast enhanced flexibility, enabling multimodal driving (both Image and Audio), as well as the simulation of individual modal inputs (Image or Audio). We are preparing to launch the new version at the end of July.
+- **[TODO]** The code of **MegActor-Sigma** will be cooming soon.
+- **[🔥🔥🔥 2024.08.28]** [Arxiv](https://arxiv.org/abs/2408.14975) **MegActor-Sigma** paper are released.
 - **[✨✨✨ 2024.07.02]** For ease of replication, we provide a 10-minute dataset available on [Google Drive](https://drive.google.com/drive/folders/1GVhCd3syxl2-oqF7TiPyoy7VrWJXbrQs?usp=drive_link), which should yield satisfactory performance..
 - **[🔥🔥🔥 2024.06.25]** **Training setup released.** Please refer to [Training](https://github.com/megvii-research/megactor/edit/main/README.md#training) for details.
 - **[🔥🔥🔥 2024.06.25]** Integrated into [OpenBayes](https://openbayes.com/), see the [demo](https://openbayes.com/console/public/tutorials/3IphFlojVlO). Thank **OpenBayes** team!
 - **[🔥🔥🔥 2024.06.17]** [Demo Gradio Online](https://f4c5-58-240-80-18.ngrok-free.app/) are released .
 - **[🔥🔥🔥 2024.06.13]** [Data curation pipeline](https://github.com/megvii-research/megactor/tree/main/data_processing) are released .
-- **[🔥🔥🔥 2024.05.31]** [Arxiv](https://arxiv.org/abs/2405.20851) paper are released.
+- **[🔥🔥🔥 2024.05.31]** [Arxiv](https://arxiv.org/abs/2405.20851) **MegActor**  paper are released.
 - **[🔥🔥🔥 2024.05.24]** Inference settings are released.
 
 
@@ -104,6 +107,15 @@ For gradio interface, please run
 
 ## BibTeX
 ```
+@misc{yang2024megactorsigmaunlockingflexiblemixedmodal,
+      title={MegActor-$\Sigma$: Unlocking Flexible Mixed-Modal Control in Portrait Animation with Diffusion Transformer}, 
+      author={Shurong Yang and Huadong Li and Juhao Wu and Minhao Jing and Linze Li and Renhe Ji and Jiajun Liang and Haoqiang Fan and Jin Wang},
+      year={2024},
+      eprint={2408.14975},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2408.14975}, 
+}
 @misc{yang2024megactor,
       title={MegActor: Harness the Power of Raw Video for Vivid Portrait Animation}, 
       author={Shurong Yang and Huadong Li and Juhao Wu and Minhao Jing and Linze Li and Renhe Ji and Jiajun Liang and Haoqiang Fan},
