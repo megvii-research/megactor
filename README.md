@@ -132,6 +132,7 @@ Many thanks to the authors of [mmengine](https://github.com/open-mmlab/mmengine)
 
 ## Contact
 If you have any questions, feel free to open an issue or contact us at yangshurong6894@gmail.com, lihuadong@megvii.com or wujuhao@megvii.com.
+**If you're seeking an internship and are interested in our work, please send your resume to wujuhao@megvii.com or lihuadong@megvii.com.**
 
 ## Star History
 
