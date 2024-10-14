@@ -79,15 +79,15 @@ The training code, model checkpoint and filtered dataset will be released, hopin
 ## Training
 We support 3-stage training on single node machines.
 
-Stage1(Image training):
+Stage1(Audio training):
 ```
 bash train.sh train.py ./configs/train/megactor-sigma/train_stage1.yaml {number of gpus on this node}
 ```
-Stage2(Video training):
+Stage2(Visual training):
 ```
 bash train.sh train.py ./configs/train/megactor-sigma/train_stage2.yaml {number of gpus on this node}
 ```
-Stage3(Video training):
+Stage3(Motion training):
 ```
 bash train.sh train.py ./configs/train/megactor-sigma/train_stage3.yaml {number of gpus on this node}
 ```
