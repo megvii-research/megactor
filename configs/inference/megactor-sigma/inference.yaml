@@ -1,0 +1,82 @@
+use_image_encoder: false
+
+pretrained_model_path: "./weights/StableDiffusion"
+pretrained_vae_path: "./weights/sd-vae-ft-mse"
+pretrained_controlnet_path: ""
+pretrained_unet_path: ""
+motion_module: ""
+empty_str_embedding: "./weights/sd15_empty_str_embedding.pt"
+
+appearance_controlnet_motion_checkpoint_path: "./weights/megactor-sigma.ckpt"
+
+model_type: "megactor-sigma"
+
+clip_image_type: "background"
+concat_noise_image_type: "origin"
+random_seed: 42
+
+do_classifier_free_guidance: true
+steps:          25
+guidance_scale: 4.5
+
+context:
+  context_frames: 16
+  context_stride: 1
+  context_overlap: 8
+
+inference_config: "configs/inference/magic_inference.yaml"
+size: [512, 512]
+L:    16
+
+source_image:
+  - "./testcases/source/1.png"
+  - "./testcases/source/2.png"
+  - "./testcases/source/10.png"
+  - "./testcases/source/12.png"
+  - "./testcases/source/4.png"
+
+video_path:
+  - "./testcases/driver/audio_CHTF_2.mp4"
+  - "./testcases/driver/audio_CHTF_3.mp4"
+  - "./testcases/driver/audio_CHTF_4.mp4"
+  - "./testcases/driver/audio_ENTF_1.mp4"
+  - "./testcases/driver/audio_ENTF_2.mp4"
+   
+audio_path:
+  - "./testcases/driver/audio_CHTF_2.mp4"
+  - "./testcases/driver/audio_CHTF_3.mp4"
+  - "./testcases/driver/audio_CHTF_4.mp4"
+  - "./testcases/driver/audio_ENTF_1.mp4"
+  - "./testcases/driver/audio_ENTF_2.mp4"
+ 
+unet_additional_kwargs:
+  unet_use_cross_frame_attention: false
+  unet_use_temporal_attention: false
+  use_motion_module: true # stage1
+  use_audio_module: true
+  motion_module_resolutions:
+  - 1
+  - 2
+  - 4
+  - 8
+  motion_module_mid_block: true
+  motion_module_decoder_only: false
+  motion_module_type: Vanilla
+  motion_module_kwargs:
+    num_attention_heads: 8
+    num_transformer_block: 1
+    attention_block_types:
+    - Temporal_Self
+    - Temporal_Self
+    temporal_position_encoding: true
+    temporal_position_encoding_max_len: 32
+    temporal_attention_dim_div: 1
+
+noise_scheduler_kwargs:
+  num_train_timesteps: 1000
+  beta_start:          0.00085
+  beta_end:            0.012
+  beta_schedule:       "scaled_linear"
+  steps_offset:        1
+  clip_sample:         false
+  rescale_betas_zero_snr: true

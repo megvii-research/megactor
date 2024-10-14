@@ -11,12 +11,7 @@ class DenseDWposePredictor:
         pose_ckpt = './weights/aux/dw-ll_ucoco_384.pth'
         dense_weight_path = "./weights/aux/densepose_model.pkl"
         self.resolution = resolution
-        self.dwpose_model = DWposeDetector(
-            det_config=det_config,
-            det_ckpt=det_ckpt,
-            pose_config=pose_config,
-            pose_ckpt=pose_ckpt,
-            device=device)
+        self.dwpose_model = DWposeDetector()
         self.dense_model = DensePosePredictor(device = device if isinstance(device, int) or isinstance(device, str) else device.index, model_weights_path=dense_weight_path)
 
     def __call__(self, img):
@@ -26,6 +21,7 @@ class DenseDWposePredictor:
         # dense_res =  dense_frame == np.array([84, 1, 68], dtype='uint8')
 
         dense_res =  (dense_frame[:, :, 0] != 84)[:, :, None] # foreground of densepose
+        # dense_res = cv2.resize(np.squeeze(dense_res), img.shape
         dense_res_face = (dense_frame[:, :, 0] == 24) | (dense_frame[:, :, 0] == 37)
         
         dw_res = (dw_frame[:, :, 0] != 0)[:, :, None] # pose of dwpose

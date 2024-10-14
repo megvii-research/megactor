@@ -14,6 +14,7 @@ from PIL import Image
 
 from ..util import HWC3, resize_image
 from . import util
+from .wholebody import Wholebody
 
 
 def draw_pose(pose, H, W, draw_all=False):
@@ -32,13 +33,17 @@ def draw_pose(pose, H, W, draw_all=False):
     return canvas
 
 class DWposeDetector:
-    def __init__(self, det_config=None, det_ckpt=None, pose_config=None, pose_ckpt=None, device="cpu"):
-        from .wholebody import Wholebody
-        self.pose_estimation = Wholebody(det_config, det_ckpt, pose_config, pose_ckpt, device)
+    def __init__(self):
+        self.pose_estimation = Wholebody()
     
     def to(self, device):
         self.pose_estimation.to(device)
         return self
+        
+    def get_cand_sub(self, input_image):
+        with torch.no_grad():
+            candidate, subset,  = self.pose_estimation(input_image)
+        return candidate, subset
     
     def __call__(self, input_image, detect_resolution=512, image_resolution=512, output_type="pil", get_mark = False, **kwargs):
         
@@ -49,7 +54,8 @@ class DWposeDetector:
         H, W, C = input_image.shape
         
         with torch.no_grad():
-            candidate, subset = self.pose_estimation(input_image)
+            ret = self.pose_estimation(input_image)
+            candidate, subset = ret
             # print("candidate and subset is", candidate.shape, subset.shape, candidate.dtype, subset.dtype)
             # print("candidate and subset unique is", np.unique(candidate), np.unique(subset))
             nums, keys, locs = candidate.shape
@@ -105,7 +111,7 @@ class DWposeDetector:
                 "body" : body,
                 "faces_all" : faces_all,
                 "hands" : hands,
-                
+                "candidate": candidate
             }
 
             if get_mark:

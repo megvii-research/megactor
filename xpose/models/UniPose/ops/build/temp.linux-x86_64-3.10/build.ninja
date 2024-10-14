@@ -1,0 +1,35 @@
+ninja_required_version = 1.3
+cxx = c++
+nvcc = /data/miniconda3/envs/megactor/bin/nvcc
+
+cflags = -pthread -B /data/miniconda3/envs/megactor/compiler_compat -Wno-unused-result -Wsign-compare -DNDEBUG -fwrapv -O2 -Wall -fPIC -O2 -isystem /data/miniconda3/envs/megactor/include -fPIC -O2 -isystem /data/miniconda3/envs/megactor/include -fPIC -DWITH_CUDA -I/data/XPose/models/UniPose/ops/src -I/data/miniconda3/envs/megactor/lib/python3.10/site-packages/torch/include -I/data/miniconda3/envs/megactor/lib/python3.10/site-packages/torch/include/torch/csrc/api/include -I/data/miniconda3/envs/megactor/lib/python3.10/site-packages/torch/include/TH -I/data/miniconda3/envs/megactor/lib/python3.10/site-packages/torch/include/THC -I/data/miniconda3/envs/megactor/include -I/data/miniconda3/envs/megactor/include/python3.10 -c
+post_cflags = -DTORCH_API_INCLUDE_EXTENSION_H '-DPYBIND11_COMPILER_TYPE="_gcc"' '-DPYBIND11_STDLIB="_libstdcpp"' '-DPYBIND11_BUILD_ABI="_cxxabi1011"' -DTORCH_EXTENSION_NAME=MultiScaleDeformableAttention -D_GLIBCXX_USE_CXX11_ABI=0 -std=c++17
+cuda_cflags = -DWITH_CUDA -I/data/XPose/models/UniPose/ops/src -I/data/miniconda3/envs/megactor/lib/python3.10/site-packages/torch/include -I/data/miniconda3/envs/megactor/lib/python3.10/site-packages/torch/include/torch/csrc/api/include -I/data/miniconda3/envs/megactor/lib/python3.10/site-packages/torch/include/TH -I/data/miniconda3/envs/megactor/lib/python3.10/site-packages/torch/include/THC -I/data/miniconda3/envs/megactor/include -I/data/miniconda3/envs/megactor/include/python3.10 -c
+cuda_post_cflags = -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_BFLOAT16_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ --expt-relaxed-constexpr --compiler-options ''"'"'-fPIC'"'"'' -DCUDA_HAS_FP16=1 -D__CUDA_NO_HALF_OPERATORS__ -D__CUDA_NO_HALF_CONVERSIONS__ -D__CUDA_NO_HALF2_OPERATORS__ -DTORCH_API_INCLUDE_EXTENSION_H '-DPYBIND11_COMPILER_TYPE="_gcc"' '-DPYBIND11_STDLIB="_libstdcpp"' '-DPYBIND11_BUILD_ABI="_cxxabi1011"' -DTORCH_EXTENSION_NAME=MultiScaleDeformableAttention -D_GLIBCXX_USE_CXX11_ABI=0 -gencode=arch=compute_70,code=compute_70 -gencode=arch=compute_70,code=sm_70 -std=c++17
+cuda_dlink_post_cflags = 
+ldflags = 
+
+rule compile
+  command = $cxx -MMD -MF $out.d $cflags -c $in -o $out $post_cflags
+  depfile = $out.d
+  deps = gcc
+
+rule cuda_compile
+  depfile = $out.d
+  deps = gcc
+  command = $nvcc  $cuda_cflags -c $in -o $out $cuda_post_cflags
+
+
+
+
+
+build /data/XPose/models/UniPose/ops/build/temp.linux-x86_64-3.10/data/XPose/models/UniPose/ops/src/cpu/ms_deform_attn_cpu.o: compile /data/XPose/models/UniPose/ops/src/cpu/ms_deform_attn_cpu.cpp
+build /data/XPose/models/UniPose/ops/build/temp.linux-x86_64-3.10/data/XPose/models/UniPose/ops/src/cuda/ms_deform_attn_cuda.o: cuda_compile /data/XPose/models/UniPose/ops/src/cuda/ms_deform_attn_cuda.cu
+build /data/XPose/models/UniPose/ops/build/temp.linux-x86_64-3.10/data/XPose/models/UniPose/ops/src/vision.o: compile /data/XPose/models/UniPose/ops/src/vision.cpp
+
+
+
+
+
+
+

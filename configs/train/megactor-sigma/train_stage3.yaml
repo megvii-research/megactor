@@ -1,0 +1,127 @@
+output_dir: "/data/train_logs/"
+
+model_type: "megactor-sigma"
+pretrained_model_path: "./weights/StableDiffusion"
+pretrained_vae_path: "./weights/sd-vae-ft-mse"
+pretrained_appearance_encoder_path: "./weights/appearance_encoder"
+pretrained_controlnet_path: ""
+motion_module: "/data/code/yangshurong/cache1/animatediff_model/v3_sd15_mm.ckpt"
+inference_config: "configs/inference/magic_inference.yaml"
+pretrained_unet_path: ""
+pretrained_audio_encoder_path: "facebook/wav2vec2-base-960h"
+empty_str_embedding: "./weights/sd15_empty_str_embedding.pt"
+
+
+clip_image_type: "background"
+concat_noise_image_type: "origin"
+valid_seed: 42
+size: [512, 512]
+
+
+appearance_controlnet_motion_checkpoint_path: "./weights/megactor-sigma.ckpt"
+eval_path: "eval_audio"
+
+unet_additional_kwargs:
+  unet_use_cross_frame_attention: false
+  unet_use_temporal_attention: false
+  use_motion_module: true # stage1
+  use_audio_module: true
+  motion_module_resolutions:
+  - 1
+  - 2
+  - 4
+  - 8
+  motion_module_mid_block: true
+  motion_module_decoder_only: false
+  motion_module_type: Vanilla
+  motion_module_kwargs:
+    num_attention_heads: 8
+    num_transformer_block: 1
+    attention_block_types:
+    - Temporal_Self
+    - Temporal_Self
+    temporal_position_encoding: true
+    temporal_position_encoding_max_len: 32
+    temporal_attention_dim_div: 1
+
+
+noise_scheduler_kwargs:
+  num_train_timesteps: 1000
+  beta_start:          0.00085
+  beta_end:            0.012
+  beta_schedule:       "scaled_linear" 
+  steps_offset:        1
+  clip_sample:         false
+  rescale_betas_zero_snr: true
+
+train_data:
+  decode_function: get_compact_frames
+  preprocess_function:  [
+    crop_audio_240728,
+    crop_audio_240722,
+    crop_audio_area
+  ]
+  warp_rate: 0.75
+  color_jit_rate: 0
+  use_swap_rate: 1
+  use_both_ratio: 0.2
+  use_audio_ratio: 0.5
+  data_dirs: [
+    "s3://radar/yangshurong/Datasets/HDTF_20240626/",
+    "s3://public-datasets/Datasets/Videos/processed/HDTF_20240704_dwpose_facebbox_facefusion-HQsource_short-video/",
+    ]
+  frame_stride:       2
+  video_length:       8
+  shuffle:            true
+  resampled:          true
+  dataset_length:     1000000
+
+validation_data:
+  source_image:
+    - "./testcases/source/1.png"
+    - "./testcases/source/2.png"
+    - "./testcases/source/10.png"
+    - "./testcases/source/12.png"
+    - "./testcases/source/4.png"
+
+  video_path:
+    - "./testcases/driver/audio_CHTF_2.mp4"
+    - "./testcases/driver/audio_CHTF_3.mp4"
+    - "./testcases/driver/audio_CHTF_4.mp4"
+    - "./testcases/driver/audio_ENTF_1.mp4"
+    - "./testcases/driver/audio_ENTF_2.mp4"
+    
+  num_inference_steps: 25
+  guidance_scale: 2
+  frame_stride: 1
+  S: 1
+
+context:
+  context_frames: 16
+  context_stride: 1
+  context_overlap: 2
+
+trainable_modules:
+  # - "audio_projection"
+  # - "unet"
+  - "motion_module"
+  # - "appearance_encoder"
+
+gradient_accumulation_steps: 2
+
+learning_rate:    1.e-5
+train_batch_size: 1
+num_workers: 2
+
+max_train_epoch:      100
+max_train_steps:      1000000
+checkpointing_epochs: -1
+checkpointing_steps:  1000
+
+validation_steps:       1000
+validation_steps_tuple: [1000]
+
+mixed_precision_training: true
+enable_xformers_memory_efficient_attention: true
+
+is_debug: False

@@ -1,0 +1,4 @@
+# ninja log v5
+4	24380	1722582393132334680	/data/XPose/models/UniPose/ops/build/temp.linux-x86_64-3.10/data/XPose/models/UniPose/ops/src/cpu/ms_deform_attn_cpu.o	1a395d4a5172a3a9
+4	40786	1722582409536887877	/data/XPose/models/UniPose/ops/build/temp.linux-x86_64-3.10/data/XPose/models/UniPose/ops/src/vision.o	7d0f297d07d7e5f7
+4	43426	1722582412188977320	/data/XPose/models/UniPose/ops/build/temp.linux-x86_64-3.10/data/XPose/models/UniPose/ops/src/cuda/ms_deform_attn_cuda.o	17b5c376b9b0a6df

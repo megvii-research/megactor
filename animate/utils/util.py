@@ -6,6 +6,7 @@ from typing import Union
 import torch
 import torchvision
 import torch.distributed as dist
+import random
 
 from safetensors import safe_open
 from tqdm import tqdm
@@ -13,6 +14,232 @@ from einops import rearrange
 from animate.utils.convert_lora_safetensor_to_diffusers import convert_lora, convert_motion_lora_ckpt_to_diffusers
 from PIL import Image, ImageOps
 
+
+def crop_area_eye_mouth(control:torch.Tensor, 
+                    source_image:torch.Tensor, 
+                    dwpose_model, 
+                    weight_type, 
+                    target_size=(512, 512)):
+    # 先将两者变成标准大小的512, 512
+    # 再将两者进行对齐
+    # 再裁剪眼睛和嘴巴的Patch
+
+    # 先将两者变成标准大小的512, 512
+    control_result = crop_face_dwpose(control, target_size, dwpose_model)
+    control, control_eye_mouth, control_eye = control_result["pixel_values"], control_result["pixel_values_eye_mouth"], control_result["pixel_values_eye"]
+    src_point = control_result["src_points"]
+
+    source_result = crop_face_dwpose(source_image, target_size, dwpose_model)
+    source_image = source_result["pixel_values"]
+    dist_point = source_result["src_points"]
+
+    transform_matrix = cv2.getAffineTransform(np.float32(src_point), np.float32(dist_point))
+    control_eye_mouth = rearrange(control_eye_mouth, "b c h w -> b h w c").numpy().astype("uint8")
+    control_eye = rearrange(control_eye, "b c h w -> b h w c").numpy().astype("uint8")
+    control_eye_mouths = []
+    control_eyes = []
+    for item_eye_mouth, item_eye in zip(control_eye_mouth, control_eye):
+        aligned_eye_mouth = cv2.warpAffine(item_eye_mouth, transform_matrix, (target_size[0], target_size[1]))
+        aligned_eye = cv2.warpAffine(item_eye, transform_matrix, (target_size[0], target_size[1]))
+        control_eye_mouths.append(aligned_eye_mouth)
+        control_eyes.append(aligned_eye)
+    control_eye_mouths = np.array(control_eye_mouths)
+    control_eyes = np.array(control_eyes)
+
+    return {
+        "control_eye_mouths" : control_eye_mouths, # numpy : b h w c , value is [0, 255]
+        "control_eyes" : control_eyes, # numpy : b h w c , value is [0, 255]
+        "control" : control, # tensor : b c h w , value is [0, 255.]
+        "source_image" : source_image, # tensor : b c h w , value is [0, 255.]
+    }
+
+
+def crop_face_dwpose(pixel_values : torch.Tensor,
+                target_size = (512, 512),
+                dwpose_model = None):
+    # pixel_values: b c h w, value is [0, 255]
+    # 返回一个dict，里面包含用于对齐的关键点，以及三个tensor，都是 b c h w, value is [0, 255.]
+    # 使用DWpose检测人脸，并将人脸放置到中心位置
+    # 
+    left_scale, right_scale, top_scale, bottom_scale = \
+        [1.25, 1.25, 1.5, 1.0] if len(pixel_values) == 1 else [0.9, 0.9, 1., 0.8]
+    eps = 0.01
+    H, W = pixel_values.shape[2:]
+    l, t, r, b = W, H, 0, 0
+    src_points = None
+    candidates = []
+    subsets = []
+    for item in pixel_values:
+        candidate, subset = dwpose_model.dwpose_model.get_cand_sub(rearrange(item, "c h w -> h w c").cpu().numpy()) # dwpose_model(rearrange(item, "c h w -> h w c").cpu().numpy())
+        candidates.append(candidate[:1])
+        subsets.append(subset[:1])
+        xs, ys = [], []
+        for j in range(24, 92): # left eyes
+            if subset[0, j] < 0.3:
+                continue
+            x, y = candidate[0, j]
+            if x < eps or y < eps:
+                continue
+            xs.append(x)
+            ys.append(y)
+        xs, ys = np.array(xs), np.array(ys)
+        x0, y0, x1, y1 = xs.min(), ys.min(), xs.max(), ys.max()
+        if src_points is None:
+            src_points = np.array([[x0, y0], [x1, y1], [x0, y1]])
+        l = min(x0, l)
+        t = min(y0, t)
+        r = max(r, x1)
+        b = max(b, y1)
+    candidates = np.array(candidates)
+    subsets = np.array(subsets)
+    # Get center and rect we need to use
+    w, h = (r - l), (b - t)
+    x_c, y_c = (l + r) / 2, (t + b) / 2
+    expand_dis = max(w, h)
+    left, right = max(x_c - expand_dis * left_scale, 0), min(x_c + expand_dis * right_scale, W)
+    top, bottom = max(y_c - expand_dis * top_scale, 0), min(y_c + expand_dis * bottom_scale, H)
+    
+    # Get new center and new rect
+    x_c, y_c = (left + right) / 2, (bottom + top) / 2
+    distance_to_edge = min(x_c - left, right - x_c, y_c - top, bottom - y_c)    
+    left = x_c - distance_to_edge
+    right = x_c + distance_to_edge
+    top = y_c - distance_to_edge
+    bottom = y_c + distance_to_edge
+    frames = pixel_values[:, :, int(top):int(bottom), int(left):int(right)].float()
+    target_height, target_width = target_size
+    frames = torch.nn.functional.interpolate(frames, size=(target_height, target_width), mode='bilinear', align_corners=False)
+    # rescale用来进行Condition和source对齐的对齐点
+    for i in range(3):
+        x, y = src_points[i]
+        x, y = (x - left) / (right - left), (y - top) / (bottom - top)
+        x, y = x * target_width, y * target_height
+        src_points[i] = x, y
+    # rescale所有的关键点
+    for i in range(len(candidates)):
+        for j in range(134):
+            x, y = candidates[i, 0, j]
+            x, y = (x - left) / (right - left), (y - top) / (bottom - top)
+            x, y = x * target_width, y * target_height
+            candidates[i, 0, j] = x, y
+    # 获取frames_eye_mouth 和 frames_eye
+    frames_eye_mouth = torch.zeros_like(frames)
+    frames_eye = torch.zeros_like(frames)
+    frames_mouth = torch.zeros_like(frames)
+    for i in range(len(candidates)):
+        xs, ys = [], []
+        point_indexs = [41, 42, 43, 44, 45, 60, 61, 62, 63, 64, 65] # 左眼睛和左眉毛
+        for j in point_indexs: # left eyes
+            if subsets[i, 0, j] < 0.3:
+                continue
+            x, y = candidates[i, 0, j]
+            if x < eps or y < eps:
+                continue
+            xs.append(x)
+            ys.append(y)
+        xs, ys = np.array(xs), np.array(ys)
+        if len(xs) != 0 and len(ys) != 0:
+            x0, y0, x1, y1 = xs.min(), ys.min(), xs.max(), ys.max()
+            xmin, xmax, ymin, ymax = get_patch(x0, y0, x1, y1, target_height, target_width)
+            frames_eye_mouth[i, :, int(ymin):int(ymax), int(xmin):int(xmax)] = frames[i, :, int(ymin):int(ymax), int(xmin):int(xmax)]
+            frames_eye[i, :, int(ymin):int(ymax), int(xmin):int(xmax)] = frames[i, :, int(ymin):int(ymax), int(xmin):int(xmax)]
+
+        xs, ys = [], []
+        point_indexs = [46, 47, 48, 49, 50, 66, 67, 68, 69, 70, 71] # 右眼睛和右眉毛
+        for j in point_indexs: # right eyes
+            if subsets[i, 0, j] < 0.3:
+                continue
+            x, y = candidates[i, 0, j]
+            if x < eps or y < eps:
+                continue
+            xs.append(x)
+            ys.append(y)
+        xs, ys = np.array(xs), np.array(ys)
+        if len(xs) != 0 and len(ys) != 0:
+            x0, y0, x1, y1 = xs.min(), ys.min(), xs.max(), ys.max()
+            xmin, xmax, ymin, ymax = get_patch(x0, y0, x1, y1, target_height, target_width)
+            frames_eye_mouth[i, :, int(ymin):int(ymax), int(xmin):int(xmax)] = frames[i, :, int(ymin):int(ymax), int(xmin):int(xmax)]
+            frames_eye[i, :, int(ymin):int(ymax), int(xmin):int(xmax)] = frames[i, :, int(ymin):int(ymax), int(xmin):int(xmax)]
+
+        xs, ys = [], []
+        for j in range(72, 91 + 1): # 嘴巴
+            if subsets[i, 0, j] < 0.3:
+                continue
+            x, y = candidates[i, 0, j]
+            if x < eps or y < eps:
+                continue
+            xs.append(x)
+            ys.append(y)
+        xs, ys = np.array(xs), np.array(ys)
+        if len(xs) != 0 and len(ys) != 0:
+            x0, y0, x1, y1 = xs.min(), ys.min(), xs.max(), ys.max()
+            xmin, xmax, ymin, ymax = get_patch(x0, y0, x1, y1, target_height, target_width)
+            frames_eye_mouth[i, :, int(ymin):int(ymax), int(xmin):int(xmax)] = frames[i, :, int(ymin):int(ymax), int(xmin):int(xmax)]
+            frames_mouth[i, :, int(ymin):int(ymax), int(xmin):int(xmax)] = frames[i, :, int(ymin):int(ymax), int(xmin):int(xmax)]
+    return {
+        "pixel_values": frames.cpu(),
+        "src_points": src_points,
+        "pixel_values_eye_mouth": frames_eye_mouth.cpu(),
+        "pixel_values_eye": frames_eye.cpu(),
+        "pixel_values_mouth": frames_mouth.cpu(),
+    }
+
+def get_condition(control:torch.Tensor, 
+                    source_image:torch.Tensor, 
+                    dwpose_model, 
+                    local_rank, weight_type, 
+                    target_size=(512, 512)):
+    # 先将两者变成标准大小的512, 512
+    # 再将两者进行对齐
+    # 再裁剪眼睛和嘴巴的Patch
+
+    # 先将两者变成标准大小的512, 512
+    control_result = crop_face_dwpose(control, target_size, dwpose_model)
+    control, control_eye_mouth, control_eye, control_mouth = control_result["pixel_values"], \
+                                                            control_result["pixel_values_eye_mouth"], \
+                                                            control_result["pixel_values_eye"], \
+                                                            control_result["pixel_values_mouth"]
+    src_point = control_result["src_points"]
+
+    source_result = crop_face_dwpose(source_image, target_size, dwpose_model)
+    source_image = source_result["pixel_values"]
+    dist_point = source_result["src_points"]
+
+    transform_matrix = cv2.getAffineTransform(np.float32(src_point), np.float32(dist_point))
+    control_eye_mouth = rearrange(control_eye_mouth, "b c h w -> b h w c").numpy().astype("uint8")
+    control_eye = rearrange(control_eye, "b c h w -> b h w c").numpy().astype("uint8")
+    control_mouth = rearrange(control_mouth, "b c h w -> b h w c").numpy().astype("uint8")
+    control_origin = rearrange(control, "b c h w -> b h w c").numpy().astype("uint8")
+    control_eye_mouths = []
+    control_eyes = []
+    control_mouths = []
+    for item_eye_mouth, item_eye, item_mouth in zip(control_eye_mouth, control_eye, control_mouth):
+        aligned_eye_mouth = cv2.warpAffine(item_eye_mouth, transform_matrix, (target_size[0], target_size[1]))
+        aligned_eye = cv2.warpAffine(item_eye, transform_matrix, (target_size[0], target_size[1]))
+        aligned_mouth = cv2.warpAffine(item_mouth, transform_matrix, (target_size[0], target_size[1]))
+        control_eye_mouths.append(aligned_eye_mouth)
+        control_eyes.append(aligned_eye)
+        control_mouths.append(aligned_mouth)
+    control_eye_mouths = np.array(control_eye_mouths)
+    control_eyes = np.array(control_eyes)
+    control_mouths = np.array(control_mouths)
+
+    return {
+        "control_eye_mouths" : control_eye_mouths, # numpy : b h w c , value is [0, 255]
+        "control_eyes" : control_eyes, # numpy : b h w c , value is [0, 255]
+        "control_mouths": control_mouths,
+        "control" : control, # tensor : b c h w , value is [0, 255.]
+        "control_origin": control_origin,
+        "source_image" : source_image, # tensor : b c h w , value is [0, 255.]
+    }
+
+
+def get_patch(x0, y0, x1, y1, H, W, w_ratio=0.75, h_ratio=0.75):
+    w, h = (x1 - x0), (y1 - y0)
+    x_c, y_c = (x1 + x0) / 2, (y1 + y0) / 2
+    xmin, xmax = max(x_c - w * w_ratio, 0), min(x_c + w * w_ratio, W)
+    ymin, ymax = max(y_c - h * h_ratio, 0), min(y_c + h * h_ratio, H)
+    return int(xmin), int(xmax), int(ymin), int(ymax)
 
 def pad_image(image):
     # Get the dimensions of the image
@@ -96,6 +323,44 @@ def save_videos_grid(videos: torch.Tensor, path: str, rescale=False, n_rows=6, f
                 x = x.numpy().astype(np.uint8)
             
             Image.fromarray(x).save(f"{dir_base_path}/_{i}.png")
+
+from moviepy.editor import VideoClip, AudioFileClip
+from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
+from pydub import AudioSegment
+def numpy_to_audioCLIP(audio_signal, sample_rate=44100, filename="output.wav"):
+    # 将 NumPy 数组转换为 Pydub AudioSegment 对象
+    audio_signal = (audio_signal * 32767).astype(np.int16)  # 确保信号是整数类型
+    audio_segment = AudioSegment(
+        audio_signal.tobytes(), 
+        frame_rate=sample_rate,
+        sample_width=audio_signal.dtype.itemsize, 
+        channels=1
+    )
+    # 导出为 WAV 文件
+    audio_segment.export(filename, format="wav")
+    audio_clip = AudioFileClip(filename)
+    os.system(f"rm -rf {filename}")
+    return audio_clip
+
+def save_videos_grid_audio(videos, audio_signal, save_path, sample_rate=16000, fps=8, max_duration=100000):
+    audio_signal = audio_signal.cpu().numpy()
+    audio_clip = numpy_to_audioCLIP(audio_signal, sample_rate=sample_rate, filename=save_path.replace("mp4", "wav"))
+    audio_clip = audio_clip.subclip(0, min(audio_clip.duration, max_duration))
+    videos = rearrange(videos, "b c t h w -> t b c h w")
+    outputs = []
+    for i, x in enumerate(videos):
+        x = torchvision.utils.make_grid(x, nrow=6)
+        x = x.transpose(0, 1).transpose(1, 2).squeeze(-1)
+        if True: # x.max() <= 1.0:
+            x = (x * 255).numpy().astype(np.uint8)
+        else:
+            x = x.numpy().astype(np.uint8)
+        outputs.append(x)
+
+    video_clip = ImageSequenceClip(outputs, fps=fps).subclip(0, min(audio_clip.duration, max_duration))
+    # video_with_audio = video_clip.set_audio(audio_clip.set_duration(videos.shape[0] / fps))
+    video_with_audio = video_clip.set_audio(audio_clip)
+    video_with_audio.write_videofile(save_path, codec="libx264")
 
 # DDIM Inversion
 @torch.no_grad()
@@ -293,7 +558,7 @@ def apply_transforms(image, params=None):
 
     return image
 
-def crop_and_resize_tensor(frame, target_size = (512, 512), crop_rect = None, center = None):
+def crop_and_resize_tensor(frame, target_size = (512, 512), crop_rect = None, center = None, offset=False):
     # 假设 frame 是 (B, C, H, W) 的格式
     b, _, height, width = frame.shape
 
@@ -340,7 +605,7 @@ def crop_and_resize_tensor(frame, target_size = (512, 512), crop_rect = None, ce
     frame_resized = torch.nn.functional.interpolate(frame_cropped, size=(target_height, target_width), mode='bilinear', align_corners=False)
     return frame_resized, (int(top), int(bottom), int(left), int(right))
 
-def crop_and_resize_tensor_with_face_rects(pixel_values, faces, target_size = (512, 512)) -> torch.Tensor:
+def crop_and_resize_tensor_with_face_rects(pixel_values, faces, target_size = (512, 512),) -> torch.Tensor:
     L, __, H, W = pixel_values.shape
     l, t, r, b = W, H, 0, 0
     min_face_size = 1
@@ -364,9 +629,197 @@ def crop_and_resize_tensor_with_face_rects(pixel_values, faces, target_size = (5
         b = max(b, bottom)
         all_face_rects.extend(face_rects[:1])
     face_center = ((l + r) // 2, (t + b) // 2)
-    output_values, bbox = crop_and_resize_tensor(pixel_values, target_size=target_size, center=face_center)
+    output_values, bbox = crop_and_resize_tensor(pixel_values, target_size=target_size, center=face_center, offset=True)
 
     return min_face_size, all_face_rects, bbox, output_values
+                
+def crop_and_resize_tensor_flex(pixel_values, faces, target_size = (512, 512),) -> torch.Tensor:
+    ratio_buckets = [3 / 4, 4 / 3, 1, 16 / 9, 9 / 16]
+    L, __, H, W = pixel_values.shape
+    l, t, r, b = W, H, 0, 0
+    min_face_size = 1
+    all_face_rects = list()
+    for i in range(L):
+        face_rects = list()
+        for j, ids in enumerate(faces['image_ids']):
+            if i == ids:
+                face_rects.append(faces['rects'][j])
+        if len(face_rects) == 0:
+            if len(all_face_rects) > 0:
+                face_rects = [all_face_rects[-1]]
+            else:
+                return None, None, None, None
+        face_rect = face_rects[0]
+        left, top, right, bottom = face_rect
+        min_face_size = min(min_face_size, (right - left) * (bottom - top) / (H * W))
+        l = min(left, l)
+        t = min(top, t)
+        r = max(r, right)
+        b = max(b, bottom)
+        all_face_rects.extend(face_rects[:1])
+    
+    hh = b - t
+    ww = r - l
+    # print(r, l, ww)
+
+    l = max(0, l - 0.1 * ww)
+    r = min(W, r + 0.1 * ww)
+    t = max(0, t - 0.1 * hh)
+    b = min(H, b + 0.1 * hh)
+    l ,t, r, b = int(l), int(t), int(r), int(b)
+    hh = b - t
+    ww = r - l
+
+    new_hw = max(min(np.random.randint(ww, ww * 2), W), min(H, np.random.randint(hh, hh * 2)))
+
+    extra_ww = new_hw - ww
+    extra_hh = new_hw - hh
+
+    start_hh = random.choice([np.random.randint(0, extra_hh // 4), np.random.randint(extra_hh * 3 // 4, extra_hh)])
+    if start_hh > t:
+        new_t, new_b = 0 , new_hw
+    else:
+        new_t, new_b = start_hh , start_hh +  new_hw
+
+    start_ww = random.choice([np.random.randint(0, extra_ww // 4), np.random.randint(extra_ww * 3 // 4, extra_ww)])
+    if start_ww > l:
+        new_l, new_r = 0 , new_hw
+    else:
+        new_l, new_r = start_ww , start_ww +  new_hw
+
+    # if ww > hh:
+    #     new_l = np.random.randint(int(max(0, l - ww * 0.9)), l)
+    #     extra_l = l - new_l
+    #     new_r = np.random.randint(r, int(min(W, r + ww - extra_l)))
+    #     new_ww = new_r - new_l
+    #     cur_ratio = random.choice([
+    #         r for r in ratio_buckets if (
+    #             r >= ( hh / new_ww) and r <= (H / new_ww)
+    #         ) 
+    #     ])
+
+    #     new_hh = int(new_ww * cur_ratio)
+    #     extra_h = new_hh - hh
+    #     start_h = np.random.randint(0, extra_h)
+    #     if start_h > t:
+    #         new_t, new_b = 0 , new_hh
+    #     else:
+    #         new_t, new_b = start_h , start_h +  new_hh
+    #     if cur_ratio > 1:
+    #             th, tw = 512, int(512 / cur_ratio)
+    #     else:
+    #         tw, th = 512, int(512 / cur_ratio)
+    # else:
+    #     new_t = np.random.randint(int(max(0, t - hh * 0.9)), t)
+    #     extra_t = t - new_t
+    #     new_b = np.random.randint(b, int(min(H, b + hh - extra_t)))
+    #     new_hh = new_b - new_t
+    #     cur_ratio = random.choice([
+    #         r for r in ratio_buckets if (
+    #             r >= (ww / new_hh) and r <= (W / new_hh)
+    #         ) 
+    #     ])
+
+    #     new_ww = int(new_hh * cur_ratio)
+    #     extra_w = new_ww - ww
+    #     start_w = np.random.randint(0, extra_w)
+    #     if start_w > l:
+    #         new_l, new_r = 0 , new_ww
+    #     else:
+    #         new_l, new_r = start_w , start_w +  new_ww
+    
+    #     if cur_ratio < 1:
+    #         th, tw = 512, int(512 / cur_ratio)
+    #     else:
+    #         tw, th = 512, int(512 / cur_ratio)
+
+    pixel_values = pixel_values[:, :, new_t: new_b, new_l: new_r].float()
+    output_values = torch.nn.functional.interpolate(pixel_values, size=(target_size[0], target_size[1]), mode='bilinear', align_corners=False)
+    return 1, all_face_rects, None, output_values
+
+
+def crop_and_resize_tensor_xpose(pixel_values, faces, target_size = (512, 512), scales=[0.9, 0.9, 1., 0.8]) -> torch.Tensor:
+    L, __, H, W = pixel_values.shape
+    l, t, r, b = W, H, 0, 0
+    min_face_size = 1
+    all_face_rects = list()
+    for i in range(L):
+        face_rects = faces[i]
+        if len(face_rects) == 0:
+            if len(all_face_rects) > 0:
+                face_rects = [all_face_rects[-1]]
+            else:
+                return None, None, None, None
+        face_rect = face_rects[0]
+        left, top, right, bottom = face_rect
+        min_face_size = min(min_face_size, (right - left) * (bottom - top) / (H * W))
+        l = min(left, l)
+        t = min(top, t)
+        r = max(r, right)
+        b = max(b, bottom)
+        all_face_rects.extend(face_rects[:1])
+    w, h = (r - l), (b - t)
+    x_c, y_c = (l + r) / 2, (t + b) / 2
+    expand_dis = max(w, h)
+
+    left_scale, right_scale, top_scale, bottom_scale = scales
+    left, right = max(x_c - expand_dis * left_scale, 0), min(x_c + expand_dis * right_scale, W)
+    top, bottom = max(y_c - expand_dis * top_scale, 0), min(y_c + expand_dis * bottom_scale, H)
+
+    x_c, y_c = (left + right) / 2, (bottom + top) / 2
+    distance_to_edge = min(x_c - left, right - x_c, y_c - top, bottom - y_c)
+    left = x_c - distance_to_edge
+    right = x_c + distance_to_edge
+    top = y_c - distance_to_edge
+    bottom = y_c + distance_to_edge
+
+    pixel_values = pixel_values[:, :, int(top):int(bottom), int(left):int(right)].float()
+    output_values = torch.nn.functional.interpolate(pixel_values, size=(target_size[0], target_size[1]), mode='bilinear', align_corners=False)
+
+    return min_face_size, (right - left) * (bottom - top) / (H * W), all_face_rects, output_values
+
+def crop_and_resize_tensor_small_faces(pixel_values, faces, target_size = (512, 512), scales=[0.9, 0.9, 1., 0.8]) -> torch.Tensor:
+    L, __, H, W = pixel_values.shape
+    l, t, r, b = W, H, 0, 0
+    min_face_size = 1
+    all_face_rects = list()
+    for i in range(L):
+        face_rects = list()
+        for j, ids in enumerate(faces['image_ids']):
+            if i == ids:
+                face_rects.append(faces['rects'][j])
+        if len(face_rects) == 0:
+            if len(all_face_rects) > 0:
+                face_rects = [all_face_rects[-1]]
+            else:
+                return None, None, None, None
+        face_rect = face_rects[0]
+        left, top, right, bottom = face_rect
+        min_face_size = min(min_face_size, (right - left) * (bottom - top) / (H * W))
+        l = min(left, l)
+        t = min(top, t)
+        r = max(r, right)
+        b = max(b, bottom)
+        all_face_rects.extend(face_rects[:1])
+    w, h = (r - l), (b - t)
+    x_c, y_c = (l + r) / 2, (t + b) / 2
+    expand_dis = max(w, h)
+
+    left_scale, right_scale, top_scale, bottom_scale = scales
+    left, right = max(x_c - expand_dis * left_scale, 0), min(x_c + expand_dis * right_scale, W)
+    top, bottom = max(y_c - expand_dis * top_scale, 0), min(y_c + expand_dis * bottom_scale, H)
+
+    x_c, y_c = (left + right) / 2, (bottom + top) / 2
+    distance_to_edge = min(x_c - left, right - x_c, y_c - top, bottom - y_c)
+    left = x_c - distance_to_edge
+    right = x_c + distance_to_edge
+    top = y_c - distance_to_edge
+    bottom = y_c + distance_to_edge
+
+    pixel_values = pixel_values[:, :, int(top):int(bottom), int(left):int(right)].float()
+    output_values = torch.nn.functional.interpolate(pixel_values, size=(target_size[0], target_size[1]), mode='bilinear', align_corners=False)
+
+    return min_face_size, (right - left) * (bottom - top) / (H * W), all_face_rects, output_values
                 
 
 def crop_and_resize_tensor_face(pixel_values : torch.Tensor,
@@ -423,7 +876,7 @@ def crop_move_face(frames, faces, target_size = (512, 512), top_margin=0.4, bott
             if len(all_face_rects) > 0:
                 face_rects = [all_face_rects[-1]]
             else:
-                return None, None, None, None
+                return None
         face_rect = face_rects[0]
         all_face_rects.append(face_rect)
         left, top, right, bottom = face_rect

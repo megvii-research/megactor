@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import matplotlib
 import cv2
 
 
@@ -109,23 +110,17 @@ def draw_bodypose(canvas, candidate, subset):
 
 
 def draw_handpose(canvas, all_hand_peaks):
-    import matplotlib
-    
     H, W, C = canvas.shape
 
     edges = [[0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [0, 9], [9, 10], \
              [10, 11], [11, 12], [0, 13], [13, 14], [14, 15], [15, 16], [0, 17], [17, 18], [18, 19], [19, 20]]
-    
-    # (person_number*2, 21, 2)
-    for i in range(len(all_hand_peaks)):
-        peaks = all_hand_peaks[i]
-        peaks = np.array(peaks)
-        
-        for ie, e in enumerate(edges):
 
+    for peaks in all_hand_peaks:
+        peaks = np.array(peaks)
+
+        for ie, e in enumerate(edges):
             x1, y1 = peaks[e[0]]
             x2, y2 = peaks[e[1]]
-            
             x1 = int(x1 * W)
             y1 = int(y1 * H)
             x2 = int(x2 * W)
@@ -133,9 +128,8 @@ def draw_handpose(canvas, all_hand_peaks):
             if x1 > eps and y1 > eps and x2 > eps and y2 > eps:
                 cv2.line(canvas, (x1, y1), (x2, y2), matplotlib.colors.hsv_to_rgb([ie / float(len(edges)), 1.0, 1.0]) * 255, thickness=2)
 
-        for _, keyponit in enumerate(peaks):
+        for i, keyponit in enumerate(peaks):
             x, y = keyponit
-
             x = int(x * W)
             y = int(y * H)
             if x > eps and y > eps:

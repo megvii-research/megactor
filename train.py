@@ -1,12 +1,11 @@
-# Copyright 2024 Megvii inc.
-#
-# Copyright (2024) MegActor Authors.
-#
-# Megvii Inc. retain all intellectual property and proprietary rights in 
-# and to this material, related documentation and any modifications thereto. 
-# Any use, reproduction, disclosure or distribution of this material and related 
-# documentation without an express license agreement from Megvii Inc. is strictly prohibited.
+# moveFace，黑白人脸训练脚本
 
+# 同时支持使用换脸数据和风格化数据。这里会根据原视频GT的人脸检测框，来裁剪换脸数据或者是风格化数据
+# 逻辑为：从数据集中获取两个，一个是原始视频，一个是换脸数据
+# 如果没有换脸数据，换脸那个key将依然是原始视频
+# 后续所有的人脸检测框均从原始视频获取，并将从换脸数据那个key获取到的value作为Condition进行裁剪
+
+# 不论是否有换脸数据，均使用Condition增广
 import os
 import math
 import random
@@ -16,6 +15,7 @@ import argparse
 import datetime
 import threading
 import subprocess
+import importlib
 
 from pathlib import Path
 from tqdm.auto import tqdm
@@ -50,12 +50,11 @@ from transformers import CLIPTextModel, CLIPTokenizer, CLIPVisionModelWithProjec
 from animate.utils.util import save_videos_grid, pad_image, generate_random_params, apply_transforms
 from animate.utils.util import crop_move_face
 from animate.utils.util import crop_and_resize_tensor, get_condition_face
-from animate.unet_magic_noiseAttenST_Ada.animate import MagicAnimate    
 from accelerate import Accelerator
 from einops import repeat
 from accelerate.utils import set_seed
 import webdataset as wds
-from eval import eval
+# from eval import eval
 from face_dataset import VideosIterableDataset
 import facer
 from controlnet_resource.dense_dwpose.densedw import DenseDWposePredictor
@@ -95,6 +94,8 @@ def main(
         lr_scheduler: str = "constant",
 
         trainable_modules: Tuple[str] = (None,),
+        grad_modules = None,
+        
         num_workers: int = 8,
         train_batch_size: int = 1,
         adam_beta1: float = 0.9,
@@ -126,11 +127,10 @@ def main(
         concat_noise_image_type: str = '',
         do_classifier_free_guidance: bool = True,
         inference_config: str = "",
+        pretrained_audio_encoder_path: str = "",
+        empty_str_embedding: str = "",
+        eval_path: str = "eval",
 ):
-
-    assert model_type in ["unet", 
-                        "unet_magic_noiseAttenST",
-                        "unet_magic_noiseAttenST_Ada"]
 
     weight_type = torch.float16
     # Accelerate
@@ -175,6 +175,8 @@ def main(
     if accelerator.is_main_process:
         print("using mse_loss")
 
+    MagicAnimate = getattr(importlib.import_module(f'animate.{model_type}.animate'), 'MagicAnimate')
+    eval_func = getattr(importlib.import_module(f'{eval_path}'), 'eval')
     model = MagicAnimate(config=config,
                          train_batch_size=train_batch_size,
                          device=local_rank,
@@ -182,30 +184,32 @@ def main(
                          mixed_precision_training=True,
                          trainable_modules=trainable_modules,
                          is_main_process=accelerator.is_main_process,
-                         weight_type=weight_type,)
+                         weight_type=weight_type,
+                         )
     # Load noise_scheduler
     noise_scheduler = model.scheduler
-    # ----- load image encoder ----- #
-    """
-    使用IP-adapter，主要包含image_encoder，clip_image_processor和image_proj_model
-    image_proj_model在Resampler里定义
-    """
-    image_processor = CLIPImageProcessor.from_pretrained(pretrained_model_path, subfolder="feature_extractor")
-    image_encoder = CLIPVisionModelWithProjection.from_pretrained(pretrained_model_path, subfolder="image_encoder")
-    image_encoder.to(local_rank, weight_type)
-    image_encoder.requires_grad_(False)
 
     # Set trainable parameters
     model.requires_grad_(False)
+    if grad_modules is None:
+        grad_modules = trainable_modules
+    trainable_params = []
     for name, param in model.named_parameters():
+        # print(name)
         for trainable_module_name in trainable_modules:
             if trainable_module_name in name:
+                trainable_params.append(param)
+                break
+
+        for grad_module_name in grad_modules:
+            if grad_module_name in name:
                 param.requires_grad = True
                 break
 
-    trainable_params = list(filter(lambda p: p.requires_grad, model.parameters()))
+    # trainable_params = list(filter(lambda p: p.requires_grad, model.parameters()))
     if accelerator.is_main_process:
         print('trainable_params', len(trainable_params))
+        print('untrainable_params', len(list(filter(lambda p: not p.requires_grad, model.parameters()))))
 
     optimizer = torch.optim.AdamW(
         trainable_params,
@@ -229,6 +233,8 @@ def main(
 
     train_dataset = VideosIterableDataset(
         data_dirs = train_data['data_dirs'],
+        preprocess_function=train_data['preprocess_function'],
+        decode_function=train_data['decode_function'],
         batch_size=train_batch_size,
         video_length   = video_length,
         resolution     = size,
@@ -240,7 +246,10 @@ def main(
         warp_rate=train_data['warp_rate'],
         color_jit_rate=train_data['color_jit_rate'],
         use_swap_rate=train_data['use_swap_rate'],
-    )
+   )
+
+    use_both_ratio=train_data['use_both_ratio']
+    use_audio_ratio=train_data['use_audio_ratio']
 
     train_dataloader = wds.WebLoader(
         train_dataset, 
@@ -305,18 +314,12 @@ def main(
         model.train()
         for step, batch in enumerate(train_dataloader):
             with accelerator.accumulate(model):
-                noisy_latents, image_emb, timesteps, pixel_values_ref_img, pixel_values_pose, ref_img_conditions, target = model.preprocess_train(batch, image_processor, image_encoder)
+                input_dict = model.preprocess_train(batch, use_both_ratio=use_both_ratio, use_audio_ratio=use_audio_ratio)
                 with accelerator.autocast():
-                    model_pred = model(init_latents=noisy_latents,
-                                    image_prompts=image_emb,
-                                    timestep=timesteps,
-                                    guidance_scale=1.0,
-                                    source_image=pixel_values_ref_img, 
-                                    motion_sequence=pixel_values_pose,
+                    loss = model(
                                     random_seed=seed,
-                                    ref_img_conditions=ref_img_conditions,
+                                    **input_dict
                                     )
-                    loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
                 accelerator.backward(loss)
                 model.module.clear_reference_control()
 
@@ -336,24 +339,6 @@ def main(
                 if is_main_process and (global_step % checkpointing_steps == 0 or global_step in validation_steps_tuple or global_step % validation_steps == 0):
                     cur_save_path = f"{output_dir}/samples/sample_{global_step}"      
                     os.makedirs(cur_save_path, exist_ok=True)
-                    for source, driver in tqdm(zip(validation_data['source_image'], validation_data['video_path'])):
-                        eval(source, driver, 
-                            config=None,
-                            config_path=origin_config,
-                            output_path=cur_save_path, 
-                            random_seed=valid_seed,
-                            guidance_scale=validation_data['guidance_scale'],
-                            weight_type=torch.float16, 
-                            num_steps=validation_data['num_inference_steps'],
-                            device=local_rank, 
-                            model=model,
-                            image_processor=image_processor,
-                            image_encoder=image_encoder,
-                            clip_image_type="background",
-                            concat_noise_image_type="origin",
-                            do_classifier_free_guidance=True,
-                            show_progressbar=False
-                        )
                     save_path = os.path.join(output_dir, f"checkpoints")
                     state_dict = {
                         "epoch": epoch,
@@ -362,7 +347,28 @@ def main(
                     }
                     model_save_path = os.path.join(save_path, f"checkpoint-steps{global_step}.ckpt")
                     torch.save(state_dict, model_save_path)
-
+                    for source, driver in tqdm(zip(validation_data['source_image'], validation_data['video_path'])):
+                        eval_func(source, driver, 
+                            accelerator=accelerator,
+                            config=None,
+                            config_path=origin_config,
+                            output_path=cur_save_path, 
+                            random_seed=valid_seed,
+                            guidance_scale=validation_data['guidance_scale'],
+                            weight_type=torch.float16, 
+                            num_steps=validation_data['num_inference_steps'],
+                            device=local_rank, 
+                            model=accelerator.unwrap_model(model),
+                            # model=model,accelerator.unwrap_model(model)
+                            # image_processor=image_processor,
+                            # image_encoder=image_encoder,
+                            clip_image_type="background",
+                            concat_noise_image_type="origin",
+                            do_classifier_free_guidance=True,
+                            show_progressbar=False,
+                            contour_preserve_generation=True,
+                            frame_sample_config=[0, -1, 1],
+                        )
                     logging.info(f"Saved state to {save_path} (global_step: {global_step})")
             logs = {"step_loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
             progress_bar.set_postfix(**logs)

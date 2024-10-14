@@ -1,0 +1,863 @@
+AnimalKindom (850 but only providing 402 non-overlapping animal classes): 
+Orange Clownfish
+Fish
+Damsel Fish
+Sterlet Fish
+Trout
+Danube Bleak Fish
+Grayling Fish
+Catfish
+Sea Toad Fish
+Pike Perch Fish
+Sardine
+Archer Fish
+Giant Trevally
+Atlantic Blue Tang Fish
+Trout Young
+Stonefish
+Yellow Watchman Goby Fish
+Salmon
+Danube Salmon
+Mimic Blenny Fish
+Pink Skunk Clownfish
+Barracuda Fish
+Surgeonfish
+Keeltail Needlefish
+Royal Grammas Fish
+Tench Fish
+Clownfish
+Barramundi Fish
+Sergeant Major Fish
+Gray Angelfish
+Butterfly Fish
+Yellow Wrasse Fish
+Lionfish
+Toadfish
+Perch Fish
+Round Face Bat Fish
+Goby Fish
+Horned Adder
+Atheris Hispida Viper
+Fer-De-Lance Snake
+Naja Nivea Snake
+Elegant Bronzeback Snake
+S Viper"]
+Black Necked Spitting Cobra
+Dice Snake
+Boa
+Dispholidus Typus Snake
+Red Spitting Cobra
+Wild Red-Tailed Boa
+S Spitting Cobra"]
+Coronella Austriaca Snake
+Lesser Sunda Pit Viper
+Oriental Whip Snake
+Snake
+Mojave Rattlesnake
+Annulated Tree Boa
+Bushmaster Snake
+Sidewinder Rattlesnake
+Vipera Berus Snake
+Reticulated Python
+King Cobra
+Atheris Squamigera
+Lichanura Trivirgata Snake
+Crotalus Willardi Ridge Nosed Rattlesnake
+Slender Hognosed Pit Viper
+Paradise Tree Snake
+Coral Mimic Snake
+Many Horned Adder
+Dendroaspis Polylepis Black Mamba
+Northern Pacific Rattlesnake
+S Boa"]
+Mozambique Spitting Cobra
+Grass Snake
+Thelotornis Snake
+Black Headed Python
+Metlapilcoatlus Mexicanus Jumping Pit Viper
+Natrix Natrix Snake
+Atheris Nitschei Viper
+Puff Adder
+Rhamnophis Aethiopissa Snake
+Coral Snake
+Montpellier Snake
+Bothriechis
+Lampropeltis Pyromelana Snake
+Lampropeltis Zonata Snake
+Natrix Tessellata Snake
+Thamnophis Cyrtopsis Snake
+Rat Snake
+White Speckled Rattlesnake
+Namaqua Dwarf Adder
+Aesculapian Snake
+Nose-Horned Viper
+Zamenis Longissiumus Snake
+Rhinoceros Viper
+Rattlesnake
+Red Bellied Black Snake
+Eyelash Pit Viper
+Snouted Cobra
+JamesonS Mamba
+Gaboon Viper
+Lampropeltis Splendida Snake
+Laticauda Saintgironsi Sea Krait
+Pituophis Catenifer Snake
+Eastern Montpellier Snake
+Black Mamba
+Javan Spitting Cobra
+Sea Snake
+Gyalopion Canum Snake
+Mojave Rattlesnake Young
+Spectacled Cobra
+Hognosed Pit Viper
+Dog Faced Water Snake
+Cobra
+Tree Snake
+Lampropeltis Getula Snake
+S Mamba"]
+Bothrops Asper
+Rinkhals Snake
+Malabar Pit Viper
+Western Diamondback Young
+Micruroides Euryxanthus Snake
+Western Diamondback
+Python
+Viper
+Horse
+Horse Young
+Texas Brown Tarantula
+Tarantula
+Diving Bell Water Spider
+Turret Spider
+Avicularia Spider
+Golden Orb Spider
+Spider
+Salticidae Jumping Spider
+Salticidae 3 Spider
+Jumping Spider
+Orb Spider
+Latrodectus Hersperus Western Widow Spider
+Redback Spider
+Western Widow Spider
+Nursery Web Spider
+Grass Spider
+Araneus Diadematus Spider
+Tetragnatha Versicolor
+Cyclosa Conica
+Daddy Longlegs Spider
+Portia Jumping Spider
+Portia 3 Spider
+Habronattus Clypeatus
+Chimpanzee
+Gorilla
+Mountain Gorilla
+Stump-Tailed Macaque
+Pig-Tailed Macaque
+Monkey
+Orangutan
+Grey Langur
+Mitred Leaf Monkey
+Gibbon
+Red Ruffed Lemur
+Proboscis Monkey
+Sumatran Orangutan
+Red-Ruffed Lemur
+White-Faced Saki Monkey
+Bornean Orangutan
+Mandrill
+Maroon Macaque
+Rhesus Macaque
+Raffles Banded Langur
+Western Chimpanzee Young
+Diana Monkey
+Lesser Spot Nosed Monkey
+S Monkey"]
+Sooty Mangabey
+King Colobus
+Olive Colobus
+Capuchin Monkey
+Red-Blacked Squirrel Monkey
+Ring-Tailed Lemur
+Iguana
+Marine Iguana
+Rhacodactylus Trachyrhynchus Gecko
+Gecko
+Lizard
+Common Basilisk Lizard
+Basilisk Lizard
+Monitor Lizard
+Strange-Horned Chameleon
+Chameleon
+Leaf-Tailed Gecko
+Clouded Monitor Lizard
+S Chameleon"]
+Indian Chameleon
+Namaqua Dwarf Chameleon
+Malayan Water Monitor Lizard
+Green Iguana
+White Wig Marine Iguana
+Skink
+Black Bearded Draco
+Yellow Striped Tree Skink
+Side Blotched Lizard
+Frilled Neck Lizard
+Leopard Gecko
+Morning Gecko
+Giant Ground Gecko
+Western Dwarf Chameleon
+Whooper Swan
+Goose
+Puffin
+Mallard Duck
+Greylag Goose
+S Duck"]
+African Finfoot
+Wandering Alabatross
+Duck
+Common Goldeneye
+Garganey
+Black Stork
+Black Swan
+Сommon Eider
+Carolina Duck
+Smew
+Lanius Excubitor
+Song Thrush Bird
+Wedge Tailed Eagle
+Great Grey Shrike
+Anthus Pratensis Bird
+Red-Throated Pipit
+Tit Bird
+Hoopoe
+Woodpecker
+Botaurus Stellaris Bird
+Little Crake Bird
+White-Throated Dipper
+Raven
+Citrine Wagtail Bird
+Yellowhammer Young
+Grey Heron
+Alauda Arvensis Bird
+Bird
+Common Cuckoo Bird
+Tringa Erythropus Bird
+White Throated Dipper Bird
+Skylark
+Mistle Thrush
+Robin Bird
+Australian Bowerbird
+Turtle Dove
+Black-Winged Stilt
+Wood Warbler
+Common Crane
+Eurasian Wren Bird
+Common Quail
+Nightingale Bird
+Tawny Owl
+Grebe Bird
+Water Dipper Bird
+Yellowhammer
+Hazel Grouse Bird
+Greater Racket Tail Drongo
+Golden Oriole
+Great Egret
+Turdus Merula Blackbird
+Nuthatch Bird
+Eagle
+Luscinia Luscinia Nightingale Bird
+Singing Nightingale
+Water Rail Bird
+Gull
+Azure Tit Bird
+Numenius Arquata Bird
+Golden Eagle
+Remiz Pendulinus Bird
+Goldfinch
+Common Whitethroat Bird
+Red-Backed Shrike Bird
+Grasshopper Warbler
+Shoebill Bird
+Common Rosefinch Bird
+Owl
+Chaffinch Bird
+Bluethroat
+Green Woodpecker
+Common Snipe
+Whinchat Bird
+Ostrich
+Boreal Owl
+European Robin Bird
+Larus Canus Bird
+Hawk
+Three-Toed Woodpecker
+Thrush Nightingale Bird
+Jack Snipe Bird
+Red Crossbill
+Chiffchaff Bird
+Shorebird
+Bullfinch
+Red-Backed Shrike Bird Young
+Circus Aeruginosus Bird
+Kingfisher
+White-Backed Woodpecker
+Tringa Ochropus Bird
+Stock Dove
+Heron
+Citrine Wagtail
+Vanellus Vanellus Bird
+Tringa Nebularia Bird
+Eurasian Wryneck Bird
+Tachybaptus Ruficollis Bird
+Quail
+Little Egret
+Stork
+Green Mamba
+Pufferfish
+Bullfrog
+Frog
+Corroboree Frog
+Desert Rain Frog
+African Clawed Toad
+Mountain Yellow-Legged Frog
+Tropical Reed Frog
+Mimic Poison Frog
+Red-Eyed Tree Frog
+S Frog"]
+Water Lily Frog
+Amazon Milk Frog
+Toad
+Marbled Rubber Frog
+Sand Frog
+Golden Poison Frog
+Rain Frog
+Monster Frog
+S Warbler Bird"]
+Great Snipe
+European Serin Bird
+Calidris Apina Bird
+Peacock
+Tringa Glareola Bird
+Cuckoo Bird
+Barred Warbler Bird
+Pacman Frog
+Ardea Alba Egret
+Tern
+Motacilla Alba Bird
+Motacilla Flava
+Anas Crecca Bird
+Blue Poison Dart Frog
+Marsh Harrier Bird
+Glass Frog
+Great Reed Warbler Bird
+Banded Rubber Frog
+Tomato Frog
+Hornbill
+Woodlark Bird
+Starling Bird
+Common Buzzard
+Gallinago Gallinago Bird
+White And Gray Wagtail Bird
+Strawberry Poison-Dart Frog
+Corncrake
+Bald Eagle
+S Harrier Young"]
+Charadrius Dubius Bird
+Pelican
+Flamingo Young
+Socotran Cormorant
+Sparrowhawk
+S Harrier"]
+Pygmy Owl
+Philomachus Pugnax Ruff Bird
+Wren
+Common Wood Pigeon
+Grass Warbler Bird
+Whiskered Tern Bird
+Icterine Warbler Bird
+Crowned Eagle
+Crane
+Hummingbird
+Ardeotis Kori Bird
+Guttural Toad
+Crested Grebe Bird
+Reed Bunting Bird
+White Cockatoo Bird
+Sedge Warbler Bird
+Goldcrest Bird
+Montagus Harrier Young
+European Turtle Dove
+Asian Glossy Starling Bird
+Spotted Wood Owl
+Sagittarius Serpentarius Bird
+Parrot
+Anas Platyrhynchos Bird
+Phalacrocorax Carbo Bird
+White-Breasted Waterhen
+African Bullfrog
+Stork-Billed Kingfisher
+Oriental Pied Hornbill
+Flamingo
+Banded Woodpecker
+Foam Nest Frog
+Vulture
+Larus Ridibundus Bird
+
+AP-10K & APT-36K:
+monkey
+elephant
+leopard
+horse
+jaguar
+panda
+marmot
+deer
+noisy night monkey
+orangutan
+sheep
+spider-monkey
+bison
+zebra
+dog
+weasel
+bat
+uakari
+raccoon
+tiger
+rat
+rhino
+chimpanzee
+antelope
+argali sheep
+gorilla
+buffalo
+bobcat
+hippo
+mouse
+moose
+howling-monkey
+black-bear
+wolf
+squirrel
+skunk
+king cheetah
+cheetah
+spider monkey
+hamster
+arctic fox
+polar bear
+rabbit
+panther
+cow
+brown bear
+otter
+beaver
+pig
+fox
+alouatta
+giraffe
+polar-bear
+raccon
+snow leopard
+lion
+cat
+mole
+black bear
+
+Desert Locust
+
+Vinegar Fly
+
+
+CUB-200-2011:
+grebe_body
+gull_body
+kingfisher_body
+sparrow_body
+tern_body
+warbler_body
+woodpecker_body
+wren_body
+
+
+
+Carfusion:
+bus
+car
+suv
+
+
+Deepfashion2:
+short sleeve top
+long sleeve top
+short sleeve outwear
+long sleeve outwear
+vest
+sling
+shorts
+trousers
+skirt
+short sleeve dress
+long sleeve dress
+vest dress
+sling dress
+
+
+
+Keypoint-5:
+bed
+chair
+sofa
+swivelchair
+table
+
+AnimalWeb:
+blackbuck
+small asian mongoose
+common dwarf mongoose
+galapagos sea lion
+margay
+nilgai
+Humboldt penguin
+oryx
+tammar wallaby
+monkey
+swamp wallaby
+muntjac deer
+blue-eyed black lemur
+binturong
+hamadryas baboon
+Adelie penguin
+Australian cattle dog
+howler
+striped hyena
+vole
+zebu
+woodchuck
+proboscis monkey
+whiptail wallaby
+anoa
+hippopotamus
+crested penguin
+addax
+red-bellied squirrel
+suni
+feral cat
+galagos
+banteng
+Weddell seal
+zebra
+Ethiopian wolf
+snow leopard
+common chimpanzee
+giant schnauzer
+lemur
+jaguarundi
+Asian golden cat
+gray wolf
+anteater
+golden jackal
+banded palm civet
+cougar
+Barbary macaque
+giant otter
+agouti
+emperor penguin
+feral horse
+yellow-footed rock wallaby
+raccoon
+topi
+opossum
+central chimpanzee
+pygmy rabbit
+fishing cat
+reedbuck
+Mediterranean monk seal
+domestic cat
+kangaroo
+boar
+rusty-spotted cat
+spider monkey
+echidna
+Chinese goral
+ringtail
+kultarr
+Californian sea lion
+guanaco
+muriqui
+gerbil
+wildebeest
+bison
+Australian terrier
+hyrax
+clouded leopard
+goat
+badger
+beaver
+Przewalski horse
+camel
+beating mongoose
+field mouse
+collared peccary
+tree shrew
+wombat
+titi
+steenbuck steenbok
+Australian sea lion
+buffalo
+chamois
+baikal seal
+brush-tailed rock wallaby
+bongo
+Barbary sheep
+great dane
+cheetah
+long-nosed mongoose
+cape buffalo
+waterbuck
+rhesus monkey
+jungle cat
+black-and-white ruffed lemur
+Japanese serow
+potto
+dall sheep
+indri
+large-spotted genet
+Amur leopard
+Owston's palm civet
+dingo
+gibbons
+Doberman
+giraffe
+fox
+quokka
+Amur tiger
+wild ass
+walrus
+common genet
+bilby
+hamster
+yellow-eyed penguin
+panda
+agile wallaby
+bengal slow loris
+marmoset
+brown hyena
+gorilla
+aardvark
+swift fox
+Magellanic penguin
+bear
+Anatolian shepherd dog
+irish wolfhound
+husky
+kinkajou
+brown rat
+tarsiers
+matschie's tree kangaroo
+black-backed jackal
+ocelot
+grey seal
+bullmastiff
+gentoo penguin
+gerenuk
+bearded seal
+hooded seal
+monte
+leopard cat
+western chimpanzee
+african penguin
+dikdik
+komondor
+coypu
+dalmatian
+armadillo
+marsh mongoose
+rusty-spotted genet
+lion
+bharal
+wolverine
+visayan warty pig
+lutung
+bornean slow loris
+caiman
+aardwolf
+german shepherd dog
+sunda slow loris
+mangabey
+cape gray mongoose
+crowned lemur
+harp seal
+gelada baboon
+wallaroo
+hare
+goodfellow's tree kangaroo
+elk
+muskox
+capybara
+toque macaque
+roe deer
+eastern lesser bamboo lemur
+leopard
+wapiti
+gray fox
+alpaca
+guinea pig
+crabeater seal
+black rhino
+little blue penguin
+bighorn sheep
+caracal
+tamarin
+hawaiian monk seal
+lumholtz's tree kangaroo
+koala
+gundi
+onager
+cacomistle
+red-ruffed lemur
+orangutan
+bobcat
+black-footed cat
+alaskan hare
+debrazza's monkey
+swamp rabbit
+white wolf
+sharpe's grysbok
+urial
+feral goat
+serval
+degu
+golden bamboo lemur
+deer mouse
+coatis
+wildcat
+roan antelope
+dugong
+fennec fox
+southern elephant seal
+saluki
+golden langur
+oribi
+red-tail monkey
+chital
+dormouse
+woolly monkey
+leopard seal
+possum
+arctic wolf
+japanese macaque
+vervet monkey
+bamboo lemur
+aye-aye
+night monkey
+blue monkey
+sand cat
+bull
+cape fox
+klipspringer
+border collie
+mouflon
+chipmunk
+potoroo
+bushbuck
+northern elephant seal
+patagonian mara
+bandicoot
+feral cattle
+babirusa
+harvest mouse
+alaskan malamute
+servaline genet
+olive baboon
+italian greyhound
+white-headed lemur
+chihuahua
+red-necked wallaby
+fallow deer
+pygmy slow loris
+australian shepherd
+eastern chimpanzee
+colobus
+chinstrap penguin
+deer
+common warthog
+dunnart
+wisent
+hedgehog
+douc langur
+tasmanian devil
+colo
+flying squirrel
+canadian lynx
+ferret
+ribbon seal
+platypus
+cotton rat
+oncilla
+geoffroy's cat
+horse
+pardine genet
+slender mongoose
+liger
+mareeba rock wallaby
+olingos
+bonobo
+harbour seal
+pademelon
+domestic dog
+chow chow
+gharial
+quoll
+capuchin monkey
+corsac fox
+dassie
+bolognese dog
+ruddy mongoose
+rhinoceros
+red panda
+king penguin
+dachshund
+common brown lemur
+pekingese dog
+western lesser bamboo lemur
+banded mongoose
+grey langur
+patas monkey
+francois langur
+white-tailed deer
+african wild dog
+collared brown lemur
+weasel
+mexican wolf
+hartebeest
+uakari
+viverrata ngalunga malayan civet
+dhole
+eurasian lynx
+hog deer
+bushbaby
+grizzly bear
+caribou
+german pinscher
+jaguar
+donkey
+duiker
+spotted hyena
+golden retriever
+pantanal cat
+spotted-necked otter
+asian palm civet
+alpine ibex
+jackrabbit
+greater bamboo lemur
+kiang
+common kusimanse
+pallas cat
+stripe-necked mongoose
+parma wallaby
+yak
+balinese cat
+spotted seal
+french bulldog
+zonkey
+arctic fox
