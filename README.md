@@ -66,6 +66,7 @@ The training code, model checkpoint and filtered dataset will be released, hopin
     mim install "mmpose>=1.1.0"
 
     conda install -c conda-forge cudatoolkit-dev -y
+    submodule update detectron2/
     ```
 
 * Dataset.
