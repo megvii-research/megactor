@@ -1,0 +1,41 @@
+name: megactor-sigma
+channels:
+  - pytorch
+  - nvidia
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pytorch=2.0.0
+  - pytorch-cuda=11.7
+  - cuda-cudart=11.7.99=0
+  - cuda-cupti=11.7.101=0
+  - cuda-libraries=11.7.1=0
+  - cuda-nvrtc=11.7.99=0
+  - cuda-nvtx=11.7.91=0
+  - cuda-runtime=11.7.1=0
+  - pytorch-cuda=11.7=h778d358_5
+  - cudatoolkit-dev=11.7.0=h1de0b5d_6
+  - pip:
+      - numpy==1.26.3
+      - setuptools==60.2.0
+      - cmake==3.28.1
+      - lit==17.0.6
+      - accelerate==0.24.1
+      - diffusers==0.27.2
+      - transformers==4.31.0
+      - einops==0.7.0
+      - hf-transfer==0.1.6
+      - huggingface-hub==0.23.2
+      - onnxruntime-gpu==1.16.0
+      - onnx==1.16.0
+      - opencv-python==4.9.0.80
+      - https://download.pytorch.org/whl/cu117/torchvision-0.15.1%2Bcu117-cp310-cp310-linux_x86_64.whl
+      - pyfacer==0.0.4
+      - refile==8.0.0.post1
+      - timm==0.9.12
+      - xformers==0.0.19
+      - safetensors==0.4.1
+      - omegaconf==2.3.0
+      - awscli==1.29.62
+      - deepspeed==0.14.2

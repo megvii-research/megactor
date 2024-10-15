@@ -17,7 +17,7 @@ import subprocess
 import sys
 import torch
 sys.path.append('./')
-from eval import eval
+from eval_audio import eval
 
 n_gpus = [False, ] * torch.cuda.device_count() 
 
@@ -26,6 +26,7 @@ savedir = f"demo/outputs"
 os.makedirs(savedir, exist_ok=True)
 
 model, image_processor, image_encoder = None, None, None
+
 
 def animate(reference_image, motion_sequence, steps, guidance_scale, sample_l, sample_r, sample_s):
     global model, image_processor, image_encoder
@@ -36,9 +37,9 @@ def animate(reference_image, motion_sequence, steps, guidance_scale, sample_l, s
     for i in range(len(n_gpus)):
         if not n_gpus[i]:
             n_gpus[i] = True
-            model, image_processor, image_encoder = eval(save_path, motion_sequence, 
+            model = eval(save_path, motion_sequence, 
                 config=None,
-                config_path="configs/inference/inference.yaml ",
+                config_path="configs/infer12_catnoise_warp08_power_vasa.yaml",
                 output_path=animation_path, 
                 random_seed=42,
                 guidance_scale=guidance_scale,
@@ -46,13 +47,19 @@ def animate(reference_image, motion_sequence, steps, guidance_scale, sample_l, s
                 num_steps=steps,
                 device=torch.device(f"cuda:0" if torch.cuda.is_available() else "cpu"), 
                 model=model,
-                image_processor=image_processor,
-                image_encoder=image_encoder,
                 clip_image_type="background",
                 concat_noise_image_type="origin",
                 do_classifier_free_guidance=True,
                 contour_preserve_generation=True,
-                frame_sample_config=[sample_l, sample_r, sample_s]
+                frame_sample_config=[sample_l, sample_r, sample_s],
+                visualization=False,
+                no_audio=False,
+                no_visual=False,
+                second_limit = 10,
+                fix=False,
+                noseless=False,
+                simulate=False,
+                mouthless=False,
                 )
             n_gpus[i] = False
             break
@@ -120,9 +127,11 @@ with gr.Blocks() as demo:
     gr.Markdown("## Examples")
     gr.Examples(
         examples=[
-            ["test_data/source/1.png", "test_data/driver/1.mp4",], 
-            ["test_data/source/2.png", "test_data/driver/1.mp4",], 
-            ["test_data/source/3.png", "test_data/driver/1.mp4",], 
+            ["./testcases/source/1.png", "./testcases/driver/audio_CHTF_2.mp4",], 
+            ["./testcases/source/2.png", "./testcases/driver/audio_CHTF_3.mp4",], 
+            ["./testcases/source/10.png", "./testcases/driver/audio_CHTF_4.mp4",], 
+            ["./testcases/source/12.png", "./testcases/driver/audio_ENTF_1.mp4",], 
+            ["./testcases/source/4.png", "./testcases/driver/audio_ENTF_2.mp4",], 
         ],
         inputs=[reference_image, motion_sequence],
         outputs=animation,

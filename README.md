@@ -1,8 +1,8 @@
 <div  align=center><img src="https://github.com/megvii-research/MegFaceAnimate/assets/29685592/5687c444-d437-4387-8219-61392cfa0dcf" width="15%"></div>
 
-## <p align=center>MegActor: Harness the Power of Raw Video for Vivid Portrait Animation</p>
+## <p align=center>MegActor-Σ: Unlocking Flexible Mixed-Modal Control in Portrait Animation with Diffusion Transformer</p>
 
-<p align=center>Shurong Yang<sup>*</sup>, Huadong Li<sup>*</sup>, Juhao Wu<sup>*</sup>, Minhao Jing<sup>*†</sup>, Linze Li, Renhe Ji<sup>‡</sup>, Jiajun Liang<sup>‡</sup>, Haoqiang Fan</p>
+<p align=center>Shurong Yang<sup>*</sup>, Huadong Li<sup>*</sup>, Juhao Wu<sup>*</sup>, Minhao Jing<sup>*</sup>, Linze Li, Renhe Ji<sup>‡</sup>, Jiajun Liang<sup>‡</sup>, Haoqiang Fan</p>
 
 **<p align=center>MEGVII Technology</p>**
 
@@ -20,7 +20,7 @@
 </div>
 
 ## News & TODO List
-- **[TODO]** The code of **MegActor-Sigma** will be cooming soon.
+- **[🔥🔥🔥 2024.10.14]** The weight and code of **MegActor-Sigma** based on SD1.5 is released.
 - **[🔥🔥🔥 2024.08.28]** [Arxiv](https://arxiv.org/abs/2408.14975) **MegActor-Sigma** paper are released.
 - **[✨✨✨ 2024.07.02]** For ease of replication, we provide a 10-minute dataset available on [Google Drive](https://drive.google.com/drive/folders/1GVhCd3syxl2-oqF7TiPyoy7VrWJXbrQs?usp=drive_link), which should yield satisfactory performance..
 - **[🔥🔥🔥 2024.06.25]** **Training setup released.** Please refer to [Training](https://github.com/megvii-research/megactor/edit/main/README.md#training) for details.
@@ -31,35 +31,33 @@
 - **[🔥🔥🔥 2024.05.24]** Inference settings are released.
 
 
-## **MegActor Features:**
 
-**Usability**: animates a portrait with video while ensuring **consistent motion**.
-
-**Reproducibility**: fully open-source and trained on **publicly available** datasets.
-
-**Efficiency**: ⚡**200 V100 hours** of training to achieve pleasant motions on portraits.
-
+https://github.com/user-attachments/assets/5b5b4ac4-67df-4397-9982-5b91e196097a
 
 ## Overview
-  ![Model](https://github.com/megvii-research/MegFaceAnimate/assets/29685592/857c7a9f-6231-4e7f-bfce-1e279ba57c89)
-
-MegActor is an intermediate-representation-free portrait animator that uses the original video, rather than intermediate features, as the driving factor to generate realistic and vivid talking head videos. Specifically, we utilize two UNets: one extracts the identity and background features from the source image, while the other accurately generates and integrates motion features directly derived from the original videos. MegActor can be trained on low-quality, publicly available datasets and excels in facial expressiveness, pose diversity, subtle controllability, and visual quality.
 
 
-## Pre-generated results
-https://github.com/megvii-research/MegFaceAnimate/assets/29685592/1b9dc77c-50da-48bd-bb16-8b2dd56d703f
+Diffusion models have demonstrated superior performance in the field of portrait animation. However, current approaches relied on either visual or audio modality to control character movements, failing to exploit the potential of mixed-modal control. This challenge arises from the difficulty in balancing the weak control strength of audio modality and the strong control strength of visual modality.
 
-https://github.com/megvii-research/MegFaceAnimate/assets/29685592/ce4e5c19-cdc7-435e-83f3-8bce39f0c04e
+To address this issue, we introduce MegActor-Σ: a mixed-modal conditional diffusion transformer (DiT), which can flexibly inject audio and visual modality control signals into portrait animation. Specifically, we make substantial advancements over its predecessor, MegActor, by leveraging the promising model structure of DiT and integrating audio and visual conditions through advanced modules within the DiT framework. To further achieve flexible combinations of mixed-modal control signals, we propose a "Modality Decoupling Control" training strategy to balance the control strength between visual and audio modalities, along with the "Amplitude Adjustment" inference strategy to freely regulate the motion amplitude of each modality.
 
-https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c7d71435-c98a-42b6-9f59-c72cb49851a1
+<div  align=center><img src="https://github.com/user-attachments/assets/bba5eb59-e8d2-40fc-a8f8-9a391ee0b693" width="50%" align=center></div>
+
+Finally, to facilitate extensive studies in this field, we design several dataset evaluation metrics to filter out public datasets and solely use this filtered dataset to train MegActor-Σ.
+
+Extensive experiments demonstrate the superiority of our approach in generating vivid portrait animations, outperforming previous closed-source methods.
+
+The training code, model checkpoint and filtered dataset will be released, hoping to help further develop the open-source community.
+
+
 
 ## Preparation
 * Environments
   
-  Detailed environment settings should be found with environment.yaml
+  Detailed environment settings should be found with env_sigma.yml
   * Linux
     ```
-    conda env create -f environment.yaml
+    conda env create -f env_sigma.yml
     pip install -U openmim
     
     mim install mmengine
@@ -68,10 +66,13 @@ https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c7d71435-c98a-
     mim install "mmpose>=1.1.0"
 
     conda install -c conda-forge cudatoolkit-dev -y
+    submodule update detectron2/
     ```
+
 * Dataset.
-   * For a detailed description of the data processing procedure, please refer to the accompanying below. [Data Process Pipeline](https://github.com/megvii-research/megactor/tree/main/data_processing)
-   * You may refer to a 10-min dataset in this format at [Google Drive](https://drive.google.com/drive/folders/1GVhCd3syxl2-oqF7TiPyoy7VrWJXbrQs?usp=drive_link).
+  
+  Data process pipeline is coming soon.
+   <!--* For a detailed description of the data processing procedure, please refer to the accompanying below. [Data Process Pipeline](https://github.com/megvii-research/megactor/tree/main/data_processing)-->
   
 * Pretrained weights
   
@@ -83,21 +84,29 @@ https://github.com/megvii-research/MegFaceAnimate/assets/29685592/c7d71435-c98a-
     ```
     
 ## Training
-We currently support two-stage training on single node machines.
+We support 3-stage training on single node machines.
 
-Stage1(Image training):
+Stage1(Audio training):
 ```
-bash train.sh train.py ./configs/train/train_stage1.yaml {number of gpus on this node}
+bash train.sh train.py ./configs/train/megactor-sigma/train_stage1.yaml {number of gpus on this node}
 ```
-Stage2(Video training):
+Stage2(Visual training):
 ```
-bash train.sh train.py ./configs/train/train_stage2.yaml {number of gpus on this node}
+bash train.sh train.py ./configs/train/megactor-sigma/train_stage2.yaml {number of gpus on this node}
+```
+Stage3(Motion training):
+```
+bash train.sh train.py ./configs/train/megactor-sigma/train_stage3.yaml {number of gpus on this node}
 ```
 
 ## Inference
-Currently only single-GPU inference is supported. We highly recommend that you use ```--contour-preserve``` arg the better preserve the shape of the source face.
+  ### single-pair generation
+    python eval_audio.py --config configs/inference/unet_attn_whis/inference.yaml --output-path ./generated_result/--num-steps 25 --guidance-scale 2 --source {source_path} --driver {driver_path}
 
-    CUDA_VISIBLE_DEVICES=0 python eval.py --config configs/inference/inference.yaml --source {source image path} --driver {driving video path} --contour-preserve
+  ### multi-pair generation
+  Specify source and driver paths in corresponding config file.
+
+    python eval_audio.py --config configs/inference/unet_attn_whis/inference.yaml --output-path ./generated_result/--num-steps 25 --guidance-scale 2
 
 
 ## Demo
@@ -138,7 +147,6 @@ If you have any questions, feel free to open an issue or contact us at yangshuro
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=megvii-research/MegActor&type=Date)](https://star-history.com/#megvii-research/MegActor&Date)
-
 
 
 

@@ -6,8 +6,9 @@ pretrained_controlnet_path: ""
 pretrained_appearance_encoder_path: "./weights/appearance_encoder"
 pretrained_unet_path: ""
 motion_module: ""
-
 appearance_controlnet_motion_checkpoint_path: "./weights/checkpoint-steps9000.ckpt"
+# appearance_controlnet_motion_checkpoint_path: "/home/wujuhao/code/train_logs/train12_catnoise_warp08_Ada-2024-06-25T18-27-08/checkpoints/checkpoint-steps3000.ckpt"
+# appearance_controlnet_motion_checkpoint_path: "/home/wujuhao/code/train_logs/train12_catnoise_warp08_Power_Ada_from35000-2024-06-25T12-26-35/checkpoints/checkpoint-steps700.ckpt"
 
 model_type: "unet_magic_noiseAttenST_Ada"
 
@@ -20,13 +21,49 @@ steps:          25
 guidance_scale: 4.5
 
 context:
-  context_frames: 16
+  context_frames: 8
   context_stride: 1
-  context_overlap: 8
+  context_overlap: 4
 
 inference_config: "configs/inference/magic_inference.yaml"
 size: [512, 512]
 L:    16
+
+source_image:
+  - "/data/VividVideoGenerationMotionNet/new_test_data/monalisa.PNG"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/vasa_full_1.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/David_Tao.PNG"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/David_Tao.PNG"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/Miley_Cyrus_Flowers.PNG"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/monalisa.PNG"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/vasa_full_1.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/vasa_full_2.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/vasa_full_3.mp4"
+  - "/data/VividVideoGenerationMotionNet/me_test_data/TikTok_6.mp4"
+  - "/data/VividVideoGenerationMotionNet/me_test_data/TikTok_16.mp4"
+  - "/data/VividVideoGenerationMotionNet/me_test_data/TikTok_18.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/David_Tao.PNG"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/vasa_full_1.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/Miley_Cyrus_Flowers.PNG"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/David_Tao.PNG"
+
+video_path:
+  - "/data/VividVideoGenerationMotionNet/new_test_data/monalisa.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/2024_05_23_benchmark/Emoji/Taylor_bigFace.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/2024_05_23_benchmark/Emoji/Taylor_bigFace.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/2024_05_22_VFHQ/1.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/2024_05_22_VFHQ/3.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/2024_05_22_VFHQ/5.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/2024_05_22_VFHQ/7.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/2024_05_22_VFHQ/8.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/2024_05_22_VFHQ/10.mp4"
+  - "/data/VividVideoGenerationMotionNet/me_test_data/TikTok_6.mp4"
+  - "/data/VividVideoGenerationMotionNet/me_test_data/TikTok_16.mp4"
+  - "/data/VividVideoGenerationMotionNet/me_test_data/TikTok_18.mp4"
+  - "/data/VividVideoGenerationMotionNet/me_test_data/TikTok_6.mp4"
+  - "/data/VividVideoGenerationMotionNet/me_test_data/TikTok_16.mp4"
+  - "/data/VividVideoGenerationMotionNet/me_test_data/TikTok_18.mp4"
+  - "/data/VividVideoGenerationMotionNet/new_test_data/David_Tao.mp4"
 
 unet_additional_kwargs:
   unet_use_cross_frame_attention: false

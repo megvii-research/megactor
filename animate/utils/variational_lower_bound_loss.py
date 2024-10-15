@@ -190,6 +190,157 @@ def betas_for_alpha_bar(
         betas.append(min(1 - alpha_bar_fn(t2) / alpha_bar_fn(t1), max_beta))
     return th.tensor(betas, dtype=th.float32)
 
+def get_beta_schedule(beta_schedule, *, beta_start, beta_end, num_diffusion_timesteps):
+    """
+    This is the deprecated API for creating beta schedules.
+    See get_named_beta_schedule() for the new library of schedules.
+    """
+    if beta_schedule == "quad":
+        betas = (
+            np.linspace(
+                beta_start ** 0.5,
+                beta_end ** 0.5,
+                num_diffusion_timesteps,
+                dtype=np.float64,
+            )
+            ** 2
+        )
+    elif beta_schedule == "linear":
+        betas = np.linspace(beta_start, beta_end, num_diffusion_timesteps, dtype=np.float64)
+    elif beta_schedule == "warmup10":
+        betas = _warmup_beta(beta_start, beta_end, num_diffusion_timesteps, 0.1)
+    elif beta_schedule == "warmup50":
+        betas = _warmup_beta(beta_start, beta_end, num_diffusion_timesteps, 0.5)
+    elif beta_schedule == "const":
+        betas = beta_end * np.ones(num_diffusion_timesteps, dtype=np.float64)
+    elif beta_schedule == "jsd":  # 1/T, 1/(T-1), 1/(T-2), ..., 1
+        betas = 1.0 / np.linspace(
+            num_diffusion_timesteps, 1, num_diffusion_timesteps, dtype=np.float64
+        )
+    else:
+        raise NotImplementedError(beta_schedule)
+    assert betas.shape == (num_diffusion_timesteps,)
+    return betas
+
+def get_named_beta_schedule(schedule_name, num_diffusion_timesteps):
+    """
+    Get a pre-defined beta schedule for the given name.
+    The beta schedule library consists of beta schedules which remain similar
+    in the limit of num_diffusion_timesteps.
+    Beta schedules may be added, but should not be removed or changed once
+    they are committed to maintain backwards compatibility.
+    """
+    if schedule_name == "linear":
+        # Linear schedule from Ho et al, extended to work for any number of
+        # diffusion steps.
+        scale = 1000 / num_diffusion_timesteps
+        return get_beta_schedule(
+            "linear",
+            beta_start=scale * 0.0001,
+            beta_end=scale * 0.02,
+            num_diffusion_timesteps=num_diffusion_timesteps,
+        )
+    elif schedule_name == "squaredcos_cap_v2":
+        return betas_for_alpha_bar(
+            num_diffusion_timesteps,
+            lambda t: math.cos((t + 0.008) / 1.008 * math.pi / 2) ** 2,
+        )
+    else:
+        raise NotImplementedError(f"unknown beta schedule: {schedule_name}")
+
+def space_timesteps(num_timesteps, section_counts):
+    """
+    Create a list of timesteps to use from an original diffusion process,
+    given the number of timesteps we want to take from equally-sized portions
+    of the original process.
+    For example, if there's 300 timesteps and the section counts are [10,15,20]
+    then the first 100 timesteps are strided to be 10 timesteps, the second 100
+    are strided to be 15 timesteps, and the final 100 are strided to be 20.
+    If the stride is a string starting with "ddim", then the fixed striding
+    from the DDIM paper is used, and only one section is allowed.
+    :param num_timesteps: the number of diffusion steps in the original
+                          process to divide up.
+    :param section_counts: either a list of numbers, or a string containing
+                           comma-separated numbers, indicating the step count
+                           per section. As a special case, use "ddimN" where N
+                           is a number of steps to use the striding from the
+                           DDIM paper.
+    :return: a set of diffusion steps from the original process to use.
+    """
+    if isinstance(section_counts, str):
+        if section_counts.startswith("ddim"):
+            desired_count = int(section_counts[len("ddim") :])
+            for i in range(1, num_timesteps):
+                if len(range(0, num_timesteps, i)) == desired_count:
+                    return set(range(0, num_timesteps, i))
+            raise ValueError(
+                f"cannot create exactly {num_timesteps} steps with an integer stride"
+            )
+        section_counts = [int(x) for x in section_counts.split(",")]
+    size_per = num_timesteps // len(section_counts)
+    extra = num_timesteps % len(section_counts)
+    start_idx = 0
+    all_steps = []
+    for i, section_count in enumerate(section_counts):
+        size = size_per + (1 if i < extra else 0)
+        if size < section_count:
+            raise ValueError(
+                f"cannot divide section of {size} steps into {section_count}"
+            )
+        frac_stride = 1 if section_count <= 1 else (size - 1) / (section_count - 1)
+        cur_idx = 0.0
+        taken_steps = []
+        for _ in range(section_count):
+            taken_steps.append(start_idx + round(cur_idx))
+            cur_idx += frac_stride
+        all_steps += taken_steps
+        start_idx += size
+    return set(all_steps)
+
+def IDDPM(
+        timestep_respacing, # 1000
+        noise_schedule="linear",
+        use_kl=False,
+        sigma_small=False,
+        predict_xstart=False,
+        learn_sigma=True,
+        pred_sigma=True,
+        rescale_learned_sigmas=False,
+        diffusion_steps=1000,
+        snr=False,
+        return_startx=False,
+):
+    betas = get_named_beta_schedule(noise_schedule, diffusion_steps)
+    if use_kl:
+        loss_type = LossType.RESCALED_KL
+    elif rescale_learned_sigmas:
+        loss_type = LossType.RESCALED_MSE
+    else:
+        loss_type = LossType.MSE
+    if timestep_respacing is None or timestep_respacing == "":
+        timestep_respacing = [diffusion_steps]
+    return SpacedDiffusion(
+        use_timesteps=space_timesteps(diffusion_steps, timestep_respacing),
+        betas=betas,
+        model_mean_type=(
+            ModelMeanType.START_X if predict_xstart else ModelMeanType.EPSILON
+        ),
+        model_var_type=(
+            (ModelVarType.LEARNED_RANGE if learn_sigma else (
+                                 ModelVarType.FIXED_LARGE
+                                 if not sigma_small
+                                 else ModelVarType.FIXED_SMALL
+                             )
+             )
+            if pred_sigma
+            else None
+        ),
+        loss_type=loss_type,
+        snr=snr,
+        return_startx=return_startx,
+        # rescale_timesteps=rescale_timesteps,
+    )
+
 
 
 class VariationalLowerBoundLoss:
@@ -203,17 +354,15 @@ class VariationalLowerBoundLoss:
 
     def __init__(
         self,
+        *,
+        betas,
         model_mean_type = ModelMeanType.EPSILON,
         model_var_type = ModelVarType.LEARNED_RANGE,
-        loss_type = LossType.KL,
-        num_train_timesteps: int = 1000,
-        beta_start: float = 0.0001,
-        beta_end: float = 0.02,
-        beta_schedule: str = "linear",
+        loss_type = LossType.MSE,
         snr=False,
         return_startx=False,
-    ):
-
+    ):  
+        
         self.model_mean_type = model_mean_type
         self.model_var_type = model_var_type
         self.loss_type = loss_type
@@ -221,25 +370,14 @@ class VariationalLowerBoundLoss:
         self.return_startx = return_startx
 
         # Use float64 for accuracy.
-        if beta_schedule == "linear":
-            self.betas = np.linspace(beta_start, beta_end, num_train_timesteps, dtype="float64")
-        elif beta_schedule == "scaled_linear":
-            # this schedule is very specific to the latent diffusion model.
-            self.betas = (
-                np.linspace(beta_start**0.5, beta_end**0.5, num_train_timesteps, dtype="float64") ** 2
-            )
-        elif beta_schedule == "squaredcos_cap_v2":
-            # Glide cosine schedule
-            self.betas = betas_for_alpha_bar(num_train_timesteps)
-        else:
-            raise NotImplementedError(f"{beta_schedule} does is not implemented for {self.__class__}")
+        betas = np.array(betas, dtype=np.float64)
+        self.betas = betas
+        assert len(betas.shape) == 1, "betas must be 1-D"
+        assert (betas > 0).all() and (betas <= 1).all()
 
-        assert len(self.betas.shape) == 1, "betas must be 1-D"
-        assert (self.betas > 0).all() and (self.betas <= 1).all()
+        self.num_timesteps = int(betas.shape[0])
 
-        self.num_timesteps = int(self.betas.shape[0])
-
-        alphas = 1.0 - self.betas
+        alphas = 1.0 - betas
         self.alphas_cumprod = np.cumprod(alphas, axis=0)
         self.alphas_cumprod_prev = np.append(1.0, self.alphas_cumprod[:-1])
         self.alphas_cumprod_next = np.append(self.alphas_cumprod[1:], 0.0)
@@ -254,7 +392,7 @@ class VariationalLowerBoundLoss:
 
         # calculations for posterior q(x_{t-1} | x_t, x_0)
         self.posterior_variance = (
-            self.betas * (1.0 - self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
+            betas * (1.0 - self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
         )
         # below: log calculation clipped because the posterior variance is 0 at the beginning of the diffusion chain
         self.posterior_log_variance_clipped = np.log(
@@ -262,7 +400,7 @@ class VariationalLowerBoundLoss:
         ) if len(self.posterior_variance) > 1 else np.array([])
 
         self.posterior_mean_coef1 = (
-            self.betas * np.sqrt(self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
+            betas * np.sqrt(self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
         )
         self.posterior_mean_coef2 = (
             (1.0 - self.alphas_cumprod_prev) * np.sqrt(alphas) / (1.0 - self.alphas_cumprod)
@@ -776,7 +914,7 @@ class VariationalLowerBoundLoss:
     def __call__(self, model_output, x_t, x_start, timestep, model_kwargs=None, noise=None, skip_noise=False):
         return self.training_losses(model_output, x_t, x_start, timestep, model_kwargs, noise, skip_noise)
 
-    def training_losses(self, model_output, x_t, x_start, timestep, model_kwargs=None, noise=None, skip_noise=False):
+    def training_losses(self, model_output, x_t, x_start, timestep, model_kwargs={}, noise=None, skip_noise=False):
         """
         Compute training losses for a single timestep.
         :param model: the model to evaluate loss on.
@@ -813,78 +951,75 @@ class VariationalLowerBoundLoss:
                 terms["loss"] *= self.num_timesteps
             # print("arrive calcu")
 
-        # elif self.loss_type in [LossType.MSE, LossType.RESCALED_MSE]:
-        #     model_output = model(x_t, t, **model_kwargs)
-        #     if isinstance(model_output, dict) and model_output.get('x', None) is not None:
-        #         output = model_output['x']
-        #     else:
-        #         output = model_output
+        elif self.loss_type in [LossType.MSE, LossType.RESCALED_MSE]:
 
-        #     if self.return_startx and self.model_mean_type == ModelMeanType.EPSILON:
-        #         return self._extracted_from_training_losses_diffusers(x_t, output, t)
-        #     # self.model_var_type = ModelVarType.LEARNED_RANGE:4
-        #     if self.model_var_type in [
-        #         ModelVarType.LEARNED,
-        #         ModelVarType.LEARNED_RANGE,
-        #     ]:
-        #         B, C = x_t.shape[:2]
-        #         assert output.shape == (B, C * 2, *x_t.shape[2:])
-        #         output, model_var_values = th.split(output, C, dim=1)
-        #         # Learn the variance using the variational bound, but don't let it affect our mean prediction.
-        #         frozen_out = th.cat([output.detach(), model_var_values], dim=1)
-        #         # vb variational bound
-        #         terms["vb"] = self._vb_terms_bpd(
-        #             model=lambda *args, r=frozen_out, **kwargs: r,
-        #             x_start=x_start,
-        #             x_t=x_t,
-        #             t=t,
-        #             clip_denoised=False,
-        #         )["output"]
-        #         if self.loss_type == LossType.RESCALED_MSE:
-        #             # Divide by 1000 for equivalence with initial implementation.
-        #             # Without a factor of 1/1000, the VB term hurts the MSE term.
-        #             terms["vb"] *= self.num_timesteps / 1000.0
+            output = model_output
+            if self.return_startx and self.model_mean_type == ModelMeanType.EPSILON:
+                return self._extracted_from_training_losses_diffusers(x_t, output, t)
+            # self.model_var_type = ModelVarType.LEARNED_RANGE:4
+            if self.model_var_type in [
+                ModelVarType.LEARNED,
+                ModelVarType.LEARNED_RANGE,
+            ]:
+                B, C = x_t.shape[:2]
+                assert output.shape == (B, C * 2, *x_t.shape[2:])
+                output, model_var_values = th.split(output, C, dim=1)
+                # Learn the variance using the variational bound, but don't let it affect our mean prediction.
+                frozen_out = th.cat([output.detach(), model_var_values], dim=1)
+                # vb variational bound
+                terms["vb"] = self._vb_terms_bpd(
+                    model_output=model_output,
+                    x_start=x_start,
+                    x_t=x_t,
+                    t=t,
+                    clip_denoised=False,
+                )["output"]
+                if self.loss_type == LossType.RESCALED_MSE:
+                    # Divide by 1000 for equivalence with initial implementation.
+                    # Without a factor of 1/1000, the VB term hurts the MSE term.
+                    terms["vb"] *= self.num_timesteps / 1000.0
 
-        #     target = {
-        #         ModelMeanType.PREVIOUS_X: self.q_posterior_mean_variance(
-        #             x_start=x_start, x_t=x_t, t=t
-        #         )[0],
-        #         ModelMeanType.START_X: x_start,
-        #         ModelMeanType.EPSILON: noise,
-        #     }[self.model_mean_type]
-        #     assert output.shape == target.shape == x_start.shape
-        #     if self.snr:
-        #         if self.model_mean_type == ModelMeanType.START_X:
-        #             pred_noise = self._predict_eps_from_xstart(x_t=x_t, t=t, pred_xstart=output)
-        #             pred_startx = output
-        #         elif self.model_mean_type == ModelMeanType.EPSILON:
-        #             pred_noise = output
-        #             pred_startx = self._predict_xstart_from_eps(x_t=x_t, t=t, eps=output)
-        #         # terms["mse_eps"] = mean_flat((noise - pred_noise) ** 2)
-        #         # terms["mse_x0"] = mean_flat((x_start - pred_startx) ** 2)
+            target = {
+                ModelMeanType.PREVIOUS_X: self.q_posterior_mean_variance(
+                    x_start=x_start, x_t=x_t, t=t
+                )[0],
+                ModelMeanType.START_X: x_start,
+                ModelMeanType.EPSILON: noise,
+            }[self.model_mean_type]
+            # target = noise
+            assert output.shape == target.shape == x_start.shape
+            if self.snr:
+                if self.model_mean_type == ModelMeanType.START_X:
+                    pred_noise = self._predict_eps_from_xstart(x_t=x_t, t=t, pred_xstart=output)
+                    pred_startx = output
+                elif self.model_mean_type == ModelMeanType.EPSILON:
+                    pred_noise = output
+                    pred_startx = self._predict_xstart_from_eps(x_t=x_t, t=t, eps=output)
+                # terms["mse_eps"] = mean_flat((noise - pred_noise) ** 2)
+                # terms["mse_x0"] = mean_flat((x_start - pred_startx) ** 2)
 
-        #         t = t[:, None, None, None].expand(pred_startx.shape)  # [128, 4, 32, 32]
-        #         # best
-        #         target = th.where(t > 249, noise, x_start)
-        #         output = th.where(t > 249, pred_noise, pred_startx)
-        #     loss = (target - output) ** 2
-        #     if model_kwargs.get('mask_ratio', False) and model_kwargs['mask_ratio'] > 0:
-        #         assert 'mask' in model_output
-        #         loss = F.avg_pool2d(loss.mean(dim=1), model.model.module.patch_size).flatten(1)
-        #         mask = model_output['mask']
-        #         unmask = 1 - mask
-        #         terms['mse'] = mean_flat(loss * unmask) * unmask.shape[1]/unmask.sum(1)
-        #         if model_kwargs['mask_loss_coef'] > 0:
-        #             terms['mae'] = model_kwargs['mask_loss_coef'] * mean_flat(loss * mask) * mask.shape[1]/mask.sum(1)
-        #     else:
-        #         terms["mse"] = mean_flat(loss)
-        #     terms["loss"] = terms["mse"] + terms["vb"] if "vb" in terms else terms["mse"]
-        #     if "mae" in terms:
-        #         terms["loss"] = terms["loss"] + terms["mae"]
-        # else:
-        #     raise NotImplementedError(self.loss_type)
+                t = t[:, None, None, None].expand(pred_startx.shape)  # [128, 4, 32, 32]
+                # best
+                target = th.where(t > 249, noise, x_start)
+                output = th.where(t > 249, pred_noise, pred_startx)
+            loss = (target - output) ** 2
+            if model_kwargs.get('mask_ratio', False) and model_kwargs['mask_ratio'] > 0:
+                assert 'mask' in model_output
+                loss = F.avg_pool2d(loss.mean(dim=1), model.model.module.patch_size).flatten(1)
+                mask = model_output['mask']
+                unmask = 1 - mask
+                terms['mse'] = mean_flat(loss * unmask) * unmask.shape[1]/unmask.sum(1)
+                if model_kwargs['mask_loss_coef'] > 0:
+                    terms['mae'] = model_kwargs['mask_loss_coef'] * mean_flat(loss * mask) * mask.shape[1]/mask.sum(1)
+            else:
+                terms["mse"] = mean_flat(loss)
+            terms["loss"] = terms["mse"] + terms["vb"] if "vb" in terms else terms["mse"]
+            if "mae" in terms:
+                terms["loss"] = terms["loss"] + terms["mae"]
+        else:
+            raise NotImplementedError(self.loss_type)
 
-        return terms["loss"]
+        return terms["loss"].mean()
 
     def training_losses_diffusers(self, model, x_start, timestep, model_kwargs=None, noise=None, skip_noise=False):
         """
@@ -1071,3 +1206,27 @@ def _extract_into_tensor(arr, timesteps, broadcast_shape):
     while len(res.shape) < len(broadcast_shape):
         res = res[..., None]
     return res + th.zeros(broadcast_shape, device=timesteps.device)
+
+class SpacedDiffusion(VariationalLowerBoundLoss):
+    """
+    A diffusion process which can skip steps in a base diffusion process.
+    :param use_timesteps: a collection (sequence or set) of timesteps from the
+                          original diffusion process to retain.
+    :param kwargs: the kwargs to create the base diffusion process.
+    """
+
+    def __init__(self, use_timesteps, **kwargs):
+        self.use_timesteps = set(use_timesteps)
+        self.timestep_map = []
+        self.original_num_steps = len(kwargs["betas"])
+
+        base_diffusion = VariationalLowerBoundLoss(**kwargs)  # pylint: disable=missing-kwoa
+        last_alpha_cumprod = 1.0
+        new_betas = []
+        for i, alpha_cumprod in enumerate(base_diffusion.alphas_cumprod):
+            if i in self.use_timesteps:
+                new_betas.append(1 - alpha_cumprod / last_alpha_cumprod)
+                last_alpha_cumprod = alpha_cumprod
+                self.timestep_map.append(i)
+        kwargs["betas"] = np.array(new_betas)
+        super().__init__(**kwargs)
