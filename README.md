@@ -20,7 +20,7 @@
 </div>
 
 ## News & TODO List
-- **[🔥🔥🔥 2024.10.14]** The code of **MegActor-Sigma** is released.
+- **[🔥🔥🔥 2024.10.14]** The weight and code of **MegActor-Sigma** based on SD1.5 is released.
 - **[🔥🔥🔥 2024.08.28]** [Arxiv](https://arxiv.org/abs/2408.14975) **MegActor-Sigma** paper are released.
 - **[✨✨✨ 2024.07.02]** For ease of replication, we provide a 10-minute dataset available on [Google Drive](https://drive.google.com/drive/folders/1GVhCd3syxl2-oqF7TiPyoy7VrWJXbrQs?usp=drive_link), which should yield satisfactory performance..
 - **[🔥🔥🔥 2024.06.25]** **Training setup released.** Please refer to [Training](https://github.com/megvii-research/megactor/edit/main/README.md#training) for details.
@@ -35,9 +35,13 @@
 https://github.com/user-attachments/assets/5b5b4ac4-67df-4397-9982-5b91e196097a
 
 ## Overview
+
+
 Diffusion models have demonstrated superior performance in the field of portrait animation. However, current approaches relied on either visual or audio modality to control character movements, failing to exploit the potential of mixed-modal control. This challenge arises from the difficulty in balancing the weak control strength of audio modality and the strong control strength of visual modality.
 
 To address this issue, we introduce MegActor-Σ: a mixed-modal conditional diffusion transformer (DiT), which can flexibly inject audio and visual modality control signals into portrait animation. Specifically, we make substantial advancements over its predecessor, MegActor, by leveraging the promising model structure of DiT and integrating audio and visual conditions through advanced modules within the DiT framework. To further achieve flexible combinations of mixed-modal control signals, we propose a "Modality Decoupling Control" training strategy to balance the control strength between visual and audio modalities, along with the "Amplitude Adjustment" inference strategy to freely regulate the motion amplitude of each modality.
+
+<div  align=center><img src="https://github.com/user-attachments/assets/bba5eb59-e8d2-40fc-a8f8-9a391ee0b693" width="50%" align=center></div>
 
 Finally, to facilitate extensive studies in this field, we design several dataset evaluation metrics to filter out public datasets and solely use this filtered dataset to train MegActor-Σ.
 
@@ -65,7 +69,9 @@ The training code, model checkpoint and filtered dataset will be released, hopin
     ```
 
 * Dataset.
-   * For a detailed description of the data processing procedure, please refer to the accompanying below. [Data Process Pipeline](https://github.com/megvii-research/megactor/tree/main/data_processing)
+  
+  Data process pipeline is coming soon.
+   <!--* For a detailed description of the data processing procedure, please refer to the accompanying below. [Data Process Pipeline](https://github.com/megvii-research/megactor/tree/main/data_processing)-->
   
 * Pretrained weights
   
