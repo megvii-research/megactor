@@ -101,12 +101,12 @@ bash train.sh train.py ./configs/train/megactor-sigma/train_stage3.yaml {number 
 
 ## Inference
   ### single-pair generation
-    python eval_audio.py --config configs/inference/unet_attn_whis/inference.yaml --output-path ./generated_result/--num-steps 25 --guidance-scale 2 --source {source_path} --driver {driver_path}
+    python eval_audio.py --config configs/inference/megactor-sigma/inference.yaml --output-path ./generated_result/--num-steps 25 --guidance-scale 2 --source {source_path} --driver {driver_path}
 
   ### multi-pair generation
   Specify source and driver paths in corresponding config file.
 
-    python eval_audio.py --config configs/inference/unet_attn_whis/inference.yaml --output-path ./generated_result/--num-steps 25 --guidance-scale 2
+    python eval_audio.py --config configs/inference/megactor-sigma/inference.yaml --output-path ./generated_result/--num-steps 25 --guidance-scale 2
 
 
 ## Demo
