@@ -39,3 +39,6 @@ dependencies:
       - omegaconf==2.3.0
       - awscli==1.29.62
       - deepspeed==0.14.2
+      - moviepy==1.0.3
+      - pydub==0.25.1
+      - webdataset==0.2.86
