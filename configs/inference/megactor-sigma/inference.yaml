@@ -30,25 +30,25 @@ L:    16
 
 source_image:
   - "./testcases/source/1.png"
-  - "./testcases/source/2.png"
-  - "./testcases/source/10.png"
-  - "./testcases/source/12.png"
   - "./testcases/source/4.png"
+  - "./testcases/source/12.png"
+  - "./testcases/source/10.png"
+  - "./testcases/source/2.png"  
 
 video_path:
+  - "./testcases/driver/audio_CHTF_4.mp4"
   - "./testcases/driver/audio_CHTF_2.mp4"
   - "./testcases/driver/audio_CHTF_3.mp4"
-  - "./testcases/driver/audio_CHTF_4.mp4"
   - "./testcases/driver/audio_ENTF_1.mp4"
   - "./testcases/driver/audio_ENTF_2.mp4"
-   
+
 audio_path:
+  - "./testcases/driver/audio_CHTF_4.mp4"
   - "./testcases/driver/audio_CHTF_2.mp4"
   - "./testcases/driver/audio_CHTF_3.mp4"
-  - "./testcases/driver/audio_CHTF_4.mp4"
   - "./testcases/driver/audio_ENTF_1.mp4"
   - "./testcases/driver/audio_ENTF_2.mp4"
- 
+
 unet_additional_kwargs:
   unet_use_cross_frame_attention: false
   unet_use_temporal_attention: false
