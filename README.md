@@ -20,6 +20,7 @@
 </div>
 
 ## News & TODO List
+- **[🎉🎉🎉 2024.12.10]** **MegActor-Sigma** has been accepted by AAAI 2025!
 - **[🔥🔥🔥 2024.10.14]** The weight and code of **MegActor-Sigma** based on SD1.5 is released.
 - **[🔥🔥🔥 2024.08.28]** [Arxiv](https://arxiv.org/abs/2408.14975) **MegActor-Sigma** paper are released.
 - **[✨✨✨ 2024.07.02]** For ease of replication, we provide a 10-minute dataset available on [Google Drive](https://drive.google.com/drive/folders/1GVhCd3syxl2-oqF7TiPyoy7VrWJXbrQs?usp=drive_link), which should yield satisfactory performance..
