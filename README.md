@@ -6,7 +6,7 @@
 
 **<p align=center>MEGVII Technology</p>**
 
-  <p align=center><sup>*</sup>Equal contribution  <sup>†</sup>Lead this project <sup>‡</sup>Corresponding author</p>
+  <p align=center><sup>*</sup>Equal contribution <sup>‡</sup>Corresponding author</p>
 
 <div align="center">
   <br>
