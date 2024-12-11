@@ -10,7 +10,7 @@ import traceback
 import math
 
 import sys
-sys.path.append('../')
+sys.path.append('../../')
 
 from controlnet_resource.dwpose import SimpleDWposeDetector
 

@@ -1,3 +1,6 @@
 [submodule "detectron2"]
 	path = detectron2
 	url = https://github.com/facebookresearch/detectron2.git
+[submodule "data_processing/megactor-sigma/syncnet_python"]
+	path = data_processing/megactor-sigma/syncnet_python
+	url = https://github.com/joonson/syncnet_python.git
